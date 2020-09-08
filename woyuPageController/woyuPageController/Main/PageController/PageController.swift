@@ -25,7 +25,7 @@ class PageController: UIView {
     private var titles: [String] = []
     
     //页眉集合
-    private lazy var pageHeaders: [UILabel] = []
+    private lazy var pageHeaders: [PageHeader] = []
     
     //页眉容器
     private lazy var pageHeaderContainer: UIScrollView = {
@@ -110,45 +110,28 @@ extension PageController {
         
         var xOffset: CGFloat = pageHeaderSpacing    //各个页眉在x方向上的偏移量
         let yOffset: CGFloat = 0    //各个页眉在y方向上的偏移量
-        var width: CGFloat = 0  //页眉宽度（自适应为与text等宽）
+        var textWidth: CGFloat = 0  //页眉标题宽度
         let widthAdd: CGFloat = 10  //页眉宽度补正
         let height = self.frame.height - underLineHeight - yOffset  //页眉高度
 
         for (index, title) in titles.enumerated() {
             
-            let pageHeader: UILabel = {
-                
-                //frame设置
-                let label = UILabel(frame: .zero)
-                label.translatesAutoresizingMaskIntoConstraints = false
-
-                //属性设置
-                label.text = title
-                label.tag = index
-                label.font = UIFont.systemFont(ofSize: 13)
-                label.numberOfLines = 0
-                label.sizeToFit()
-                width = label.frame.width
-                label.textAlignment = .center
-                label.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
-                
-                return label
-            }()
-
+            let pageHeader = PageHeader(index, title)
             pageHeaderContainer.addSubview(pageHeader)
+            textWidth = pageHeader.textWidth
             
             //设置autolayout参数
             NSLayoutConstraint.activate([
                 
                 pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: xOffset),
                 pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: yOffset),
-                pageHeader.widthAnchor.constraint(equalToConstant: width + widthAdd),
+                pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
                 pageHeader.heightAnchor.constraint(equalToConstant: height)
             
             ])
             
             //更新xOffset
-            xOffset = xOffset + width + widthAdd + pageHeaderSpacing
+            xOffset = xOffset + textWidth + widthAdd + pageHeaderSpacing
             pageHeaders.append(pageHeader)
         }
         

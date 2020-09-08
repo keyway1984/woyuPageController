@@ -11,23 +11,32 @@ import UIKit
 class PageHeader: UIView {
     
     //MARK: - 公有属性
-    private let text: String    //页眉标题
-    private let index: Int  //页眉索引
+    var textWidth: CGFloat = 0  //页眉标题宽度
     
     
     //MARK: - 私有属性
+    private let text: String    //页眉标题
+    private let index: Int  //页眉索引
+    
     private lazy var button: UIButton = {   //页眉按钮
         
-        let button = UIButton()
+        //frame设置
+        let button = UIButton(frame: .zero)
+        button.translatesAutoresizingMaskIntoConstraints = false
         
-        button.titleLabel?.text = text
+        //属性设置
+        button.isUserInteractionEnabled = true
+        button.setTitle(text, for: .normal)
         button.tag = index
         button.titleLabel?.font = UIFont.systemFont(ofSize: 13)
         button.titleLabel?.numberOfLines = 0
-
         button.titleLabel?.textAlignment = .center
-        button.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
-        button.titleLabel?.textColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        button.setTitleColor(#colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0), for: .normal)
+        button.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
+        
+        //记录文本宽度
+        button.sizeToFit()
+        self.textWidth = button.frame.width
         
         return button
     }()
@@ -36,10 +45,10 @@ class PageHeader: UIView {
     //MARK: - 构造器
     
     //指定构造器
-    init(index: Int, title: String) {
+    init(_ index: Int, _ title: String) {
         self.index = index
         self.text = title
-        super.init(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+        super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
         commonInit()
     }
@@ -51,6 +60,7 @@ class PageHeader: UIView {
     
     //自定义初始化内容
     private func commonInit() {
+        self.isUserInteractionEnabled = true
         buildSubViews()
     }
     
@@ -61,13 +71,16 @@ class PageHeader: UIView {
 extension PageHeader {
     //添加子view
     private func buildSubViews() {
-        
+
         self.addSubview(button)
-        button.frame = self.bounds
-//        NSLayoutConstraint.activate([
-//
-//            button.centerXAnchor.constraint(equalTo: safeAreaLayoutGuide.centerXAnchor),
-//            button.centerYAnchor.constraint(equalTo: safeAreaLayoutGuide.centerYAnchor)
-//        ])
+
+        //autolayout设置
+        NSLayoutConstraint.activate([
+
+            button.topAnchor.constraint(equalTo: self.topAnchor),
+            button.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+            button.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            button.trailingAnchor.constraint(equalTo: self.trailingAnchor)
+        ])
     }
 }
