@@ -14,8 +14,8 @@
 		D677EF1325063C6000D2736D /* woyuPageController.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = D677EF1125063C6000D2736D /* woyuPageController.xcdatamodeld */; };
 		D677EF1525063C6100D2736D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D677EF1425063C6100D2736D /* Assets.xcassets */; };
 		D677EF1825063C6100D2736D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D677EF1625063C6100D2736D /* LaunchScreen.storyboard */; };
-		D677EF2225063DA300D2736D /* PageController.xib in Resources */ = {isa = PBXBuildFile; fileRef = D677EF2125063DA300D2736D /* PageController.xib */; };
 		D677EF2425064A9600D2736D /* PageController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D677EF2325064A9600D2736D /* PageController.swift */; };
+		D677EF26250720D400D2736D /* PageHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D677EF25250720D400D2736D /* PageHeader.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,8 +28,8 @@
 		D677EF1425063C6100D2736D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D677EF1725063C6100D2736D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D677EF1925063C6100D2736D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		D677EF2125063DA300D2736D /* PageController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = PageController.xib; sourceTree = "<group>"; };
 		D677EF2325064A9600D2736D /* PageController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageController.swift; sourceTree = "<group>"; };
+		D677EF25250720D400D2736D /* PageHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageHeader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,8 +86,8 @@
 		D677EF2025063D1100D2736D /* PageController */ = {
 			isa = PBXGroup;
 			children = (
-				D677EF2125063DA300D2736D /* PageController.xib */,
 				D677EF2325064A9600D2736D /* PageController.swift */,
+				D677EF25250720D400D2736D /* PageHeader.swift */,
 			);
 			path = PageController;
 			sourceTree = "<group>";
@@ -153,7 +153,6 @@
 				D677EF1825063C6100D2736D /* LaunchScreen.storyboard in Resources */,
 				D677EF1525063C6100D2736D /* Assets.xcassets in Resources */,
 				D677EF1025063C6000D2736D /* Main.storyboard in Resources */,
-				D677EF2225063DA300D2736D /* PageController.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +166,7 @@
 				D677EF1325063C6000D2736D /* woyuPageController.xcdatamodeld in Sources */,
 				D677EF0D25063C6000D2736D /* ViewController.swift in Sources */,
 				D677EF0925063C6000D2736D /* AppDelegate.swift in Sources */,
+				D677EF26250720D400D2736D /* PageHeader.swift in Sources */,
 				D677EF0B25063C6000D2736D /* SceneDelegate.swift in Sources */,
 				D677EF2425064A9600D2736D /* PageController.swift in Sources */,
 			);

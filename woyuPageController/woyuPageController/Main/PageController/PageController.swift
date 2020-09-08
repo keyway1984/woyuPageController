@@ -21,13 +21,20 @@ class PageController: UIView {
 
     
     //MARK: - 私有属性
-    private var titles: [String] = []   //页眉标题
+    //页眉标题集合
+    private var titles: [String] = []
     
+    //页眉集合
     private lazy var pageHeaders: [UILabel] = []
     
-    private lazy var pageHeaderContainer: UIScrollView = {  //页眉容器
+    //页眉容器
+    private lazy var pageHeaderContainer: UIScrollView = {
         
-        let scrollView = UIScrollView()
+        //frame设置
+        let scrollView = UIScrollView(frame: .zero)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        
+        //属性设置
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.showsVerticalScrollIndicator = false
         scrollView.scrollsToTop = false
@@ -35,9 +42,14 @@ class PageController: UIView {
         return scrollView
     }()
     
-    private lazy var underLine: UIView = {  //页眉下标
+    //页眉下标
+    private lazy var underLine: UIView = {
         
-        let view = UIView()
+        //frame设置
+        let view = UIView(frame: .zero)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        //属性设置
         view.backgroundColor = #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1)
 
         return view
@@ -61,7 +73,7 @@ class PageController: UIView {
 
     //其它构造函数
     private func commonInit() {
-        buildUI()
+        buildSubViews()
     }
 }
 
@@ -70,7 +82,7 @@ class PageController: UIView {
 extension PageController {
     
     //通过subViews搭建UI
-    private func buildUI() {
+    private func buildSubViews() {
 
         createPageHeaderContainer()
         createPageHeader()
@@ -79,9 +91,18 @@ extension PageController {
     
     //创建页眉容器
     private func createPageHeaderContainer() {
-        
-        pageHeaderContainer.frame = self.bounds
+
         self.addSubview(pageHeaderContainer)
+        
+        //autolayout设置
+        NSLayoutConstraint.activate([
+            
+            pageHeaderContainer.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            pageHeaderContainer.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            pageHeaderContainer.topAnchor.constraint(equalTo: self.topAnchor),
+            pageHeaderContainer.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+        
+        ])
     }
     
     //创建页眉
@@ -89,33 +110,45 @@ extension PageController {
         
         var xOffset: CGFloat = pageHeaderSpacing    //各个页眉在x方向上的偏移量
         let yOffset: CGFloat = 0    //各个页眉在y方向上的偏移量
-        let widthAdd: CGFloat = 10  //页眉的宽度等于页眉标题的宽度+补正参数
+        var width: CGFloat = 0  //页眉宽度（自适应为与text等宽）
+        let widthAdd: CGFloat = 10  //页眉宽度补正
         let height = self.frame.height - underLineHeight - yOffset  //页眉高度
-        
+
         for (index, title) in titles.enumerated() {
             
             let pageHeader: UILabel = {
                 
-                let label = UILabel()
-                
+                //frame设置
+                let label = UILabel(frame: .zero)
+                label.translatesAutoresizingMaskIntoConstraints = false
+
                 //属性设置
                 label.text = title
                 label.tag = index
                 label.font = UIFont.systemFont(ofSize: 13)
                 label.numberOfLines = 0
                 label.sizeToFit()
+                width = label.frame.width
                 label.textAlignment = .center
                 label.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
-
-                //frame设置
-                label.frame = CGRect(x: xOffset, y: yOffset, width: label.frame.width + widthAdd, height: height)
-                xOffset = xOffset + label.frame.width + pageHeaderSpacing
                 
                 return label
             }()
-            
-            
+
             pageHeaderContainer.addSubview(pageHeader)
+            
+            //设置autolayout参数
+            NSLayoutConstraint.activate([
+                
+                pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: xOffset),
+                pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: yOffset),
+                pageHeader.widthAnchor.constraint(equalToConstant: width + widthAdd),
+                pageHeader.heightAnchor.constraint(equalToConstant: height)
+            
+            ])
+            
+            //更新xOffset
+            xOffset = xOffset + width + widthAdd + pageHeaderSpacing
             pageHeaders.append(pageHeader)
         }
         
@@ -127,13 +160,15 @@ extension PageController {
 
         guard let firstPageHeader = pageHeaders.first else { return }   //获取第一个页眉
         
-        //属性设置
-        let xOffset: CGFloat = firstPageHeader.frame.origin.x   //x方向上的偏移量
-        let yOffset: CGFloat = firstPageHeader.frame.origin.y + firstPageHeader.frame.height    //y方向上的偏移量
-        let width: CGFloat = firstPageHeader.frame.width    //下标的宽度
-        let height: CGFloat = underLineHeight   //下标的高度
-        
-        underLine.frame = CGRect(x: xOffset, y: yOffset, width: width, height: height)
         self.addSubview(underLine)
+        
+        //设置autolayout参数
+        NSLayoutConstraint.activate([
+            
+            underLine.topAnchor.constraint(equalTo: firstPageHeader.bottomAnchor, constant: 0),
+            underLine.leadingAnchor.constraint(equalTo: firstPageHeader.leadingAnchor, constant: 0),
+            underLine.widthAnchor.constraint(equalTo: firstPageHeader.widthAnchor, constant: 0),
+            underLine.heightAnchor.constraint(equalToConstant: underLineHeight)
+        ])
     }
 }
