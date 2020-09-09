@@ -8,6 +8,13 @@
 
 import UIKit
 
+//MARK: - 相关协议
+protocol PageHeaderDelegate {
+    func PageHeaderIsClicked(_ pageHeader: PageHeader, index: Int)
+}
+
+
+//MARK: - PageHeader 类定义
 class PageHeader: UIView {
     
     //MARK: - 公有属性
@@ -17,6 +24,10 @@ class PageHeader: UIView {
     //MARK: - 私有属性
     private let text: String    //页眉标题
     private let index: Int  //页眉索引
+    
+    //MARK: - 代理引用
+    var delegate: PageHeaderDelegate?
+    
     
     private lazy var button: UIButton = {   //页眉按钮
         
@@ -33,6 +44,9 @@ class PageHeader: UIView {
         button.titleLabel?.textAlignment = .center
         button.setTitleColor(#colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0), for: .normal)
         button.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
+        
+        //手势设置
+        button.addTarget(self, action: #selector(buttonAction), for: .touchUpInside)
         
         //记录文本宽度
         button.sizeToFit()
@@ -76,11 +90,20 @@ extension PageHeader {
 
         //autolayout设置
         NSLayoutConstraint.activate([
-
             button.topAnchor.constraint(equalTo: self.topAnchor),
             button.bottomAnchor.constraint(equalTo: self.bottomAnchor),
             button.leadingAnchor.constraint(equalTo: self.leadingAnchor),
             button.trailingAnchor.constraint(equalTo: self.trailingAnchor)
         ])
+    }
+}
+
+
+//MARK: - 添加手势
+extension PageHeader {
+    
+    @objc func buttonAction(sender: UIButton!) {
+        
+        self.delegate?.PageHeaderIsClicked(self, index: self.index)
     }
 }
