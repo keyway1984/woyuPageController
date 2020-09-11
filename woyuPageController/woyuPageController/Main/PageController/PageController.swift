@@ -10,10 +10,16 @@ import Foundation
 import UIKit
 
 //MARK: - 相关协议
-
-//DataSource
+//数据源
 protocol PageHeaderControllerDataSource: class {
-    func setPageHeaderTitles() -> [String]
+    //获取页眉标题字符串组
+    func SetPageHeaderTitlesTo(_ pageController: PageController, pageHeaders: [PageHeader]) -> [String]
+}
+
+//交互通知
+protocol PageControllerDelegate: class {
+//    //通知选中当前页眉
+//    func pageController(_ pageController: PageController, selectCurrent pageHeader: PageHeader)
 }
 
 
@@ -22,25 +28,28 @@ class PageController: UIView {
     
     
     //MARK: - 公开属性
-    
     //UI参数
     var underLineHeight: CGFloat = 10   //下标的默认高度
     var underLineSpacing: CGFloat = 5   //下标和页眉间的间距
-    var pageHeaderSpacing: CGFloat = 10  //页眉的间距
+    var pageHeaderSpacing: CGFloat = 10  //页眉之间的间距
+    var pageHeaderLRMargin: CGFloat = 20  //页眉和容器左右两边的边距
+    var pageHeaderTopMargin: CGFloat = 0    //页眉和容器上面的边距
+    
     
     //代理引用
     weak var dataSource: PageHeaderControllerDataSource?
+    weak var delegate: PageControllerDelegate?
     
     
     //MARK: - 私有属性
-    //页眉标题集合
-    private var titles: [String]
+    //状态参数
+    private var titles: [String]    //页眉标题集合
+    private lazy var pageHeaders: [PageHeader] = [] //页眉集合
+    private var currentIndex: Int = 0 //已选中的页眉的索引
     
-    //页眉集合
-    private lazy var pageHeaders: [PageHeader] = []
     
-    //页眉容器
-    private lazy var pageHeaderContainer: UIScrollView = {
+    //子View实例
+    private lazy var pageHeaderContainer: UIScrollView = {  //容器
         
         //frame设置
         let scrollView = UIScrollView(frame: .zero)
@@ -54,8 +63,7 @@ class PageController: UIView {
         return scrollView
     }()
     
-    //页眉下标
-    private lazy var underLine: UIView = {
+    private lazy var underLine: UIView = {  //页眉下标
         
         //frame设置
         let view = UIView(frame: .zero)
@@ -77,9 +85,10 @@ class PageController: UIView {
         self.translatesAutoresizingMaskIntoConstraints = false
         buildSubViews()
     }
+    
     //通过指定托管对象构造（需遵从相关协议）
-    init(delegate: PageHeaderControllerDataSource) {
-        self.dataSource = delegate
+    init(dataSource: PageHeaderControllerDataSource) {
+        self.dataSource = dataSource
         self.titles = []
         super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
@@ -89,27 +98,32 @@ class PageController: UIView {
     //必要构造器
     //从 xib 或者 storyboard中构造
     required init?(coder: NSCoder) {
-        self.titles = ["标题233"]
+  
+        let ViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "woyuViewController")
+        if let dataSource = ViewController as? PageHeaderControllerDataSource { self.dataSource = dataSource }
+
+        self.titles = Array(repeating: "storyboard自动创建的页眉标题", count: 5)
         super.init(coder: coder)
         buildSubViews()
     }
     
     //便利构造器
+    //自动创建复数个相同的标题
     convenience init() {
-        self.init(pageHeaderTitles: [])
+        let titles: [String] = Array(repeating: "自动创建的页眉标题", count: 5)
+        self.init(pageHeaderTitles: titles)
     }
 }
 
 
-//MARK: - subViews的初始化内容
+//MARK: - 子view构建相关方法
 extension PageController {
     
-    //通过subViews搭建UI
+    //UI搭建
     private func buildSubViews() {
         createPageHeaderContainer()
-        createPageHeader()
+        createPageHeaders()
         createUnderLine()
-        
     }
     
     
@@ -129,40 +143,59 @@ extension PageController {
     
     
     //创建页眉
-    private func createPageHeader() {
-        
-        var xOffset: CGFloat = pageHeaderSpacing    //各个页眉在x方向上的偏移量
-        let yOffset: CGFloat = 0    //各个页眉在y方向上的偏移量
+    private func createPageHeaders() {
+ 
         var textWidth: CGFloat = 0  //页眉标题宽度
-        let widthAdd: CGFloat = 10  //页眉宽度补正
+        let widthAdd: CGFloat = 20  //页眉宽度补正
         
         //从代理函数中获取页眉标题数据源
-        if let titles = dataSource?.setPageHeaderTitles() { self.titles = titles }
+        if let titles = dataSource?.SetPageHeaderTitlesTo(self, pageHeaders: pageHeaders) { self.titles = titles }
         
         //根据标题初始化页眉
         for (index, title) in titles.enumerated() {
             
+            //创建页眉
             let pageHeader = PageHeader(index, title)
             textWidth = pageHeader.textWidth
             
-            pageHeader.delegate = self
+            //设置页眉手势
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.pageHeaderGestureResponder(_:)))
+            tapGesture.numberOfTapsRequired = 1
+            pageHeader.addGestureRecognizer(tapGesture)
+            pageHeader.isUserInteractionEnabled = true
             
+            //添加页眉进容器
             pageHeaderContainer.addSubview(pageHeader)
+            
+            //设置页眉约束
+            if let prePageHeader = pageHeaders.last {
+                
+                NSLayoutConstraint.activate([
+                    pageHeader.leadingAnchor.constraint(equalTo: prePageHeader.trailingAnchor, constant: pageHeaderSpacing),
+                    pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin),
+                    pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
+                    pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing)
+                ])
+                
+            } else {
+                //对于第一个页眉
+                NSLayoutConstraint.activate([
+                    pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: pageHeaderLRMargin),
+                    pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin),
+                    pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
+                    pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing)
+                ])
+            }
+            
+            //添加页眉进集合
             pageHeaders.append(pageHeader)
-            
-            //设置autolayout参数
-            NSLayoutConstraint.activate([
-                pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: xOffset),
-                pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: yOffset),
-                pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
-                pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - yOffset - underLineSpacing)
-            ])
-            
-            //更新xOffset
-            xOffset = xOffset + textWidth + widthAdd + pageHeaderSpacing
         }
         
-        pageHeaderContainer.contentSize.width = xOffset //根据最后一个页眉x方向上的偏移量确定Container.contentSize的宽度
+        //对容器的contentSize进行约束
+        if let lastPageHeader = pageHeaders.last {
+            
+            lastPageHeader.trailingAnchor.constraint(equalTo: pageHeaderContainer.trailingAnchor, constant: -pageHeaderLRMargin).isActive = true
+        }
     }
     
     
@@ -170,6 +203,7 @@ extension PageController {
     private func createUnderLine() {
 
         guard let firstPageHeader = pageHeaders.first else { return }   //获取第一个页眉
+        firstPageHeader.isSelected = true
         
         pageHeaderContainer.addSubview(underLine)
         
@@ -185,11 +219,25 @@ extension PageController {
 
 
 
-
-extension PageController: PageHeaderDelegate {
-    func PageHeaderIsClicked(_ pageHeader: PageHeader, index: Int) {
-        print(index)
+//MARK: - UI相关方法
+extension PageController {
+    
+    //手势反馈
+    @objc private func pageHeaderGestureResponder(_ sender: UITapGestureRecognizer) {
+        
+        guard let selectedHeader = sender.view as? PageHeader else { return }
+        
+        pageHeaderSwitcher(switchTo: selectedHeader.index)
     }
     
-    
+    //切换页眉的选中状态
+    private func pageHeaderSwitcher(switchTo targetIndex: Int) {
+        
+        if targetIndex != currentIndex {
+            pageHeaders[currentIndex].isSelected = false    //已经选中的页眉反选
+            pageHeaders[targetIndex].isSelected = true    //选中目标页眉
+            currentIndex = targetIndex  //记录新选中的页眉索引
+        }
+    }
 }
+

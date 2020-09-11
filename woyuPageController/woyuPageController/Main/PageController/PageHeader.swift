@@ -8,102 +8,118 @@
 
 import UIKit
 
-//MARK: - 相关协议
-protocol PageHeaderDelegate {
-    func PageHeaderIsClicked(_ pageHeader: PageHeader, index: Int)
-}
 
 
 //MARK: - PageHeader 类定义
 class PageHeader: UIView {
     
+    
     //MARK: - 公有属性
+    //UI参数
     var textWidth: CGFloat = 0  //页眉标题宽度
+    
+    //状态参数
+    let text: String    //页眉标题
+    let index: Int  //页眉索引
+    var isSelected: Bool {  //反馈页眉的选中状态
+        get { return selectedState }
+        
+        set(newState) {
+            selectedState = newState
+            
+            if newState { selectedState(label) } else { deselectedState(label) }
+        }
+    }
     
     
     //MARK: - 私有属性
-    private let text: String    //页眉标题
-    private let index: Int  //页眉索引
+    //状态参数
+    private var selectedState: Bool = false //记录页眉的选中状态
     
-    //MARK: - 代理引用
-    var delegate: PageHeaderDelegate?
-    
-    
-    private lazy var button: UIButton = {   //页眉按钮
+    //子view实例
+    private lazy var label: UILabel = {   //页眉主体
         
         //frame设置
-        let button = UIButton(frame: .zero)
-        button.translatesAutoresizingMaskIntoConstraints = false
+        let label = UILabel(frame: .zero)
+        label.translatesAutoresizingMaskIntoConstraints = false
         
         //属性设置
-        button.isUserInteractionEnabled = true
-        button.setTitle(text, for: .normal)
-        button.tag = index
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 13)
-        button.titleLabel?.numberOfLines = 0
-        button.titleLabel?.textAlignment = .center
-        button.setTitleColor(#colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0), for: .normal)
-        button.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
-        
-        //手势设置
-        button.addTarget(self, action: #selector(buttonAction), for: .touchUpInside)
+        label.text = self.text
+        label.tag = index
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        self.deselectedState(label)
         
         //记录文本宽度
-        button.sizeToFit()
-        self.textWidth = button.frame.width
+        label.sizeToFit()
+        self.textWidth = label.frame.width
         
-        return button
+        return label
     }()
     
-
-    //MARK: - 构造器
     
+    //MARK: - 构造器
     //指定构造器
+    //通过指定页眉索引和标题字符串构造
     init(_ index: Int, _ title: String) {
         self.index = index
         self.text = title
         super.init(frame: .zero)
         self.translatesAutoresizingMaskIntoConstraints = false
-        commonInit()
-    }
-    
-    //从xib 或者 storyboard 构造
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    //自定义初始化内容
-    private func commonInit() {
-        self.isUserInteractionEnabled = true
         buildSubViews()
     }
     
+    //必要构造器
+    //当前类不支持从xib 或者 storyboard 构造
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }
 
 
-//MARK: - 添加子view
+//MARK: - 子view构建相关方法
 extension PageHeader {
-    //添加子view
+    
+    //UI搭建
     private func buildSubViews() {
-
-        self.addSubview(button)
-
+        createButton()
+    }
+    
+    //创建按钮
+    private func createButton() {
+        
+        self.addSubview(label)
+        
         //autolayout设置
         NSLayoutConstraint.activate([
-            button.topAnchor.constraint(equalTo: self.topAnchor),
-            button.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            button.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            button.trailingAnchor.constraint(equalTo: self.trailingAnchor)
+            label.topAnchor.constraint(equalTo: self.topAnchor),
+            label.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+            label.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: self.trailingAnchor)
         ])
     }
 }
 
-
-//MARK: - 添加手势
+//MARK: - UI相关方法
 extension PageHeader {
     
-    @objc func buttonAction(sender: UIButton!) {
+    //设置页眉主体的点选状态
+    private func selectedState(_ label: UILabel) {
         
-        self.delegate?.PageHeaderIsClicked(self, index: self.index)
+        label.textColor = #colorLiteral(red: 0.9909599423, green: 0.2717903256, blue: 0.1500301957, alpha: 1)
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
+    }
+    
+    //设置页眉主体的非选中状态
+    private func deselectedState(_ label: UILabel) {
+        
+        label.textColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
     }
 }
+
+
+
+
