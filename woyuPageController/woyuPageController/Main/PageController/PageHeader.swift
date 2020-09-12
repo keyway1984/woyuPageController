@@ -16,7 +16,7 @@ class PageHeader: UIView {
     
     //MARK: - 公有属性
     //UI参数
-    var textWidth: CGFloat = 0  //页眉标题宽度
+    var textSize: CGSize = .zero  //页眉标题宽度
     
     //状态参数
     let text: String    //页眉标题
@@ -26,8 +26,7 @@ class PageHeader: UIView {
         
         set(newState) {
             selectedState = newState
-            
-            if newState { selectedState(label) } else { deselectedState(label) }
+            selectionStateManger(headerBody)
         }
     }
     
@@ -37,7 +36,7 @@ class PageHeader: UIView {
     private var selectedState: Bool = false //记录页眉的选中状态
     
     //子view实例
-    private lazy var label: UILabel = {   //页眉主体
+    private lazy var headerBody: UILabel = {   //页眉主体
         
         //frame设置
         let label = UILabel(frame: .zero)
@@ -46,13 +45,10 @@ class PageHeader: UIView {
         //属性设置
         label.text = self.text
         label.tag = index
-        label.numberOfLines = 0
+        label.numberOfLines = 1
         label.textAlignment = .center
-        self.deselectedState(label)
-        
-        //记录文本宽度
-        label.sizeToFit()
-        self.textWidth = label.frame.width
+        label.font = UIFont.boldSystemFont(ofSize: 13)
+        selectionStateManger(label)
         
         return label
     }()
@@ -88,14 +84,13 @@ extension PageHeader {
     //创建按钮
     private func createButton() {
         
-        self.addSubview(label)
+        self.addSubview(headerBody)
         
         //autolayout设置
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: self.topAnchor),
-            label.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            label.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            label.trailingAnchor.constraint(equalTo: self.trailingAnchor)
+            headerBody.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0, identifier: "bottom"),
+            headerBody.widthAnchor.constraint(equalToConstant: textSize.width, identifier: "width"),
+            headerBody.heightAnchor.constraint(equalToConstant: textSize.height, identifier: "height")
         ])
     }
 }
@@ -103,20 +98,39 @@ extension PageHeader {
 //MARK: - UI相关方法
 extension PageHeader {
     
-    //设置页眉主体的点选状态
-    private func selectedState(_ label: UILabel) {
-        
-        label.textColor = #colorLiteral(red: 0.9909599423, green: 0.2717903256, blue: 0.1500301957, alpha: 1)
-        label.font = UIFont.systemFont(ofSize: 15)
-        label.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
+    //管理页眉的点选状态
+    private func selectionStateManger(_ body: UILabel) {
+
+        if selectedState {
+
+            body.textColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+            bodyAnimation(body)
+
+        } else {
+
+            body.textColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)
+            body.transform = CGAffineTransform(scaleX: 1, y: 1)
+        }
+
+        //更新当前文本宽度
+        body.sizeToFit()
+        self.textSize = body.frame.size
+            
+        //更新body的约束
+        body.constraint(withIdentify: "width")?.constant = textSize.width
+        body.constraint(withIdentify: "height")?.constant = textSize.height
     }
+
     
-    //设置页眉主体的非选中状态
-    private func deselectedState(_ label: UILabel) {
+    //设置页眉标题字体缩放的动画效果
+    private func bodyAnimation(_ body: UILabel) {
+
+        UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseIn, animations: {
+
+            body.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+
+        }, completion: nil)
         
-        label.textColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)
-        label.font = UIFont.systemFont(ofSize: 12)
-        label.backgroundColor = #colorLiteral(red: 0.9098039269, green: 0.4784313738, blue: 0.6431372762, alpha: 1)
     }
 }
 

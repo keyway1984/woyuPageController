@@ -18,8 +18,8 @@ protocol PageHeaderControllerDataSource: class {
 
 //交互通知
 protocol PageControllerDelegate: class {
-//    //通知选中当前页眉
-//    func pageController(_ pageController: PageController, selectCurrent pageHeader: PageHeader)
+    //    //通知选中当前页眉
+    //    func pageController(_ pageController: PageController, selectCurrent pageHeader: PageHeader)
 }
 
 
@@ -45,7 +45,7 @@ class PageController: UIView {
     //状态参数
     private var titles: [String]    //页眉标题集合
     private lazy var pageHeaders: [PageHeader] = [] //页眉集合
-    private var currentIndex: Int = 0 //已选中的页眉的索引
+    private var currentIndex: Int = -1 //当前已选中的页眉的索引
     
     
     //子View实例
@@ -59,7 +59,7 @@ class PageController: UIView {
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.showsVerticalScrollIndicator = false
         scrollView.scrollsToTop = false
-
+        
         return scrollView
     }()
     
@@ -71,7 +71,7 @@ class PageController: UIView {
         
         //属性设置
         view.backgroundColor = #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1)
-
+        
         return view
     }()
     
@@ -94,14 +94,14 @@ class PageController: UIView {
         self.translatesAutoresizingMaskIntoConstraints = false
         buildSubViews()
     }
-
+    
     //必要构造器
     //从 xib 或者 storyboard中构造
     required init?(coder: NSCoder) {
-  
+        
         let ViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "woyuViewController")
         if let dataSource = ViewController as? PageHeaderControllerDataSource { self.dataSource = dataSource }
-
+        
         self.titles = Array(repeating: "storyboard自动创建的页眉标题", count: 5)
         super.init(coder: coder)
         buildSubViews()
@@ -129,7 +129,7 @@ extension PageController {
     
     //创建页眉容器
     private func createPageHeaderContainer() {
-
+        
         self.addSubview(pageHeaderContainer)
         
         //autolayout设置
@@ -144,9 +144,8 @@ extension PageController {
     
     //创建页眉
     private func createPageHeaders() {
- 
-        var textWidth: CGFloat = 0  //页眉标题宽度
-        let widthAdd: CGFloat = 20  //页眉宽度补正
+        
+        var textSize: CGSize = .zero  //页眉标题宽度
         
         //从代理函数中获取页眉标题数据源
         if let titles = dataSource?.SetPageHeaderTitlesTo(self, pageHeaders: pageHeaders) { self.titles = titles }
@@ -156,7 +155,8 @@ extension PageController {
             
             //创建页眉
             let pageHeader = PageHeader(index, title)
-            textWidth = pageHeader.textWidth
+            textSize = pageHeader.textSize
+            pageHeader.backgroundColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
             
             //设置页眉手势
             let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.pageHeaderGestureResponder(_:)))
@@ -169,23 +169,18 @@ extension PageController {
             
             //设置页眉约束
             if let prePageHeader = pageHeaders.last {
-                
-                NSLayoutConstraint.activate([
-                    pageHeader.leadingAnchor.constraint(equalTo: prePageHeader.trailingAnchor, constant: pageHeaderSpacing),
-                    pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin),
-                    pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
-                    pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing)
-                ])
-                
+                //对其它页眉
+                pageHeader.leadingAnchor.constraint(equalTo: prePageHeader.trailingAnchor, constant: pageHeaderSpacing, identifier: "leading").isActive = true
             } else {
                 //对于第一个页眉
-                NSLayoutConstraint.activate([
-                    pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: pageHeaderLRMargin),
-                    pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin),
-                    pageHeader.widthAnchor.constraint(equalToConstant: textWidth + widthAdd),
-                    pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing)
-                ])
+                pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: pageHeaderLRMargin, identifier: "leading").isActive = true
             }
+            
+            NSLayoutConstraint.activate([
+                pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin, identifier: "top"),
+                pageHeader.widthAnchor.constraint(equalToConstant: textSize.width, identifier: "width"),
+                pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing, identifier: "height")
+            ])
             
             //添加页眉进集合
             pageHeaders.append(pageHeader)
@@ -201,9 +196,9 @@ extension PageController {
     
     //创建页眉下标
     private func createUnderLine() {
-
+        
         guard let firstPageHeader = pageHeaders.first else { return }   //获取第一个页眉
-        firstPageHeader.isSelected = true
+        pageHeaderSwitcher(switchTo: firstPageHeader.index)
         
         pageHeaderContainer.addSubview(underLine)
         
@@ -230,14 +225,31 @@ extension PageController {
         pageHeaderSwitcher(switchTo: selectedHeader.index)
     }
     
-    //切换页眉的选中状态
+    //页眉切换器
     private func pageHeaderSwitcher(switchTo targetIndex: Int) {
         
         if targetIndex != currentIndex {
-            pageHeaders[currentIndex].isSelected = false    //已经选中的页眉反选
-            pageHeaders[targetIndex].isSelected = true    //选中目标页眉
-            currentIndex = targetIndex  //记录新选中的页眉索引
+            headerSelectStateManager(selection: targetIndex)
+            headerSizeAdjuster(sizing: targetIndex)
         }
+        
+        currentIndex = targetIndex  //记录新选中的页眉索引
+    }
+    
+    //管理页眉的选中状态
+    private func headerSelectStateManager(selection targetIndex: Int) {
+        
+        if currentIndex >= 0 { pageHeaders[currentIndex].isSelected = false }
+        pageHeaders[targetIndex].isSelected = true
+    }
+    
+    //根据选中后的页眉字体动态调整页眉的大小
+    private func headerSizeAdjuster(sizing targetIndex: Int) {
+        
+        if currentIndex >= 0 { pageHeaders[currentIndex].constraint(withIdentify: "width")?.constant = pageHeaders[currentIndex].textSize.width }
+        pageHeaders[targetIndex].constraint(withIdentify: "width")?.constant = pageHeaders[targetIndex].textSize.width
+        
+        layoutIfNeeded()
     }
 }
 
