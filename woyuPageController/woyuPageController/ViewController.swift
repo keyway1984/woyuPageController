@@ -39,6 +39,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+
 //        pageController.dataSource = self
 //        pageController.isHidden = true
 //
@@ -60,7 +61,14 @@ extension ViewController: PageHeaderControllerDataSource {
     
     //指定页眉标题数据源
     func SetPageHeaderTitlesTo(_ pageController: PageController, pageHeaders: [PageHeader]) -> [String] {
-        return ["代理创建的标题1","代理创建的标题2","代理创建的标题3","代理创建的标题4","代理创建的标题5"]
+        
+        var titles: [String] = []
+        
+        for index in 0...8 {
+            titles.append("代理创建的标题\(index)")
+        }
+        
+        return titles
     }
 }
 

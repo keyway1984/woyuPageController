@@ -16,12 +16,18 @@ class PageHeader: UIView {
     
     //MARK: - 公有属性
     //UI参数
-    var textSize: CGSize = .zero  //页眉标题宽度
+    var textSize: CGSize = .zero  //页眉标题尺寸
+    var textFont: UIFont = UIFont.boldSystemFont(ofSize: 13)    //页眉标题字体（非选中状态）
+    var textFontHL: UIFont = UIFont.boldSystemFont(ofSize: 18)  //页眉标题字体（选中状态）
+    var textTintColor: UIColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)  //页眉字体颜色（非选中状态）
+    var textTintColorHL: UIColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)   //页眉字体颜色（选中状态）
+    
     
     //状态参数
     let text: String    //页眉标题
     let index: Int  //页眉索引
     var isSelected: Bool {  //反馈页眉的选中状态
+        
         get { return selectedState }
         
         set(newState) {
@@ -29,6 +35,8 @@ class PageHeader: UIView {
             selectionStateManger(headerBody)
         }
     }
+    var useAnimation: Bool = true   //缩放动画开关
+    
     
     
     //MARK: - 私有属性
@@ -47,7 +55,6 @@ class PageHeader: UIView {
         label.tag = index
         label.numberOfLines = 1
         label.textAlignment = .center
-        label.font = UIFont.boldSystemFont(ofSize: 13)
         selectionStateManger(label)
         
         return label
@@ -78,19 +85,19 @@ extension PageHeader {
     
     //UI搭建
     private func buildSubViews() {
-        createButton()
+        createHeaderBody()
     }
     
     //创建按钮
-    private func createButton() {
+    private func createHeaderBody() {
         
         self.addSubview(headerBody)
         
         //autolayout设置
         NSLayoutConstraint.activate([
             headerBody.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0, identifier: "bottom"),
-            headerBody.widthAnchor.constraint(equalToConstant: textSize.width, identifier: "width"),
-            headerBody.heightAnchor.constraint(equalToConstant: textSize.height, identifier: "height")
+            headerBody.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0, identifier: "leading"),
+            headerBody.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 0, identifier: "trailing")
         ])
     }
 }
@@ -103,34 +110,18 @@ extension PageHeader {
 
         if selectedState {
 
-            body.textColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
-            bodyAnimation(body)
+            body.textColor = textTintColorHL
+            if useAnimation { body.fontsizeAnimat(textFontHL, withDuration: 0.1) } else { body.font = textFontHL }
 
         } else {
 
-            body.textColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)
-            body.transform = CGAffineTransform(scaleX: 1, y: 1)
+            body.textColor = textTintColor
+            body.font = textFont
         }
 
-        //更新当前文本宽度
+        //更新当前文本尺寸
         body.sizeToFit()
         self.textSize = body.frame.size
-            
-        //更新body的约束
-        body.constraint(withIdentify: "width")?.constant = textSize.width
-        body.constraint(withIdentify: "height")?.constant = textSize.height
-    }
-
-    
-    //设置页眉标题字体缩放的动画效果
-    private func bodyAnimation(_ body: UILabel) {
-
-        UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseIn, animations: {
-
-            body.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
-
-        }, completion: nil)
-        
     }
 }
 
