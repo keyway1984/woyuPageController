@@ -24,55 +24,48 @@ protocol PageControllerDelegate: class {
 
 
 //MARK: - PageController类定义
+
 class PageController: UIView {
-    
-    
+
     //MARK: - 公开属性
     //UI参数
     //下标
-    var underLineTint: UIColor {                        //设置下标颜色
-        get { return underLineDefaultColor }
-        set (newTint) {
-            underLineDefaultColor = newTint
-            underLine.backgroundColor = newTint
-            self.layoutIfNeeded()
+    var removeUnderLine: Bool {                                                 //设置下标是否移除
+        get { return self.contains(self.underLine) }
+        set {
+            if newValue {
+                self.underLine.removeFromSuperview()
+                self.container.constraints.forEach {
+                    if $0.identifier == "headerHeight" { $0.constant = -headerTopMargin }
+                }
+            }
         }
     }
-    var underLineBorderRadius: Bool {                   //设置下标边框是否切圆角
-        get { return underLineFilletedCorner }
-        set (newState) {
-            underLineFilletedCorner = newState
-            underLine.layer.cornerRadius = newState ? underLineHeight / 2 : 0
-            underLine.layer.masksToBounds = newState
-            self.layoutIfNeeded()
+    
+    var lineTint: UIColor? {                                                    //设置下标颜色
+        get { return self.underLine.backgroundColor }
+        set { self.underLine.backgroundColor = newValue }
+    }
+    
+    var lineFilletedRadius: Bool {                                               //设置下标边框是否切圆角
+        get { return self.underLine.layer.cornerRadius > 0 }
+        set {
+            self.underLine.layer.cornerRadius = (newValue ? lineHeight/2 : 0)
+            self.underLine.layer.masksToBounds = newValue
         }
     }
-    var underLineHide: Bool {                           //设置下标是否隐藏
-        get { return underLineHiddenState }
-        set (newState) {
-            underLineHiddenState = newState
-            underLine.isHidden = newState
-            self.layoutIfNeeded()
-        }
-    }
+    
     //页眉
-    var pageHeaderTint: UIColor {                        //设置页眉背景颜色
-        get { return pageHeaderDefaultTint }
-        set (newTint) {
-            pageHeaderDefaultTint = newTint
-            let _ = self.pageHeaders.map { $0.backgroundColor = newTint }
-            self.layoutIfNeeded()
-        }
+    var headerTint: UIColor {                                                      //设置页眉背景颜色
+        get { return self.headerDefaultTint }
+        set {
+            self.headerDefaultTint = newValue
+            self.headers.forEach { $0.backgroundColor = newValue } }
     }
-    //容器
-    var containerTint: UIColor {                          //设置容器背景颜色
-        get { return containerDefaultTint }
-        set (newColor) {
-            containerDefaultTint = newColor
-            pageHeaderContainer.backgroundColor = newColor
-            self.layoutIfNeeded()
-        }
-    }
+    
+    // TODO: 还要追加几个计算属性用于便捷设置页眉字体的选中和非选中效果
+    
+    
     
     //代理引用
     weak var dataSource: PageHeaderControllerDataSource?
@@ -82,16 +75,15 @@ class PageController: UIView {
     //MARK: - 私有属性
     //UI参数
     //下标
-    private var underLineHeight: CGFloat = 6            //下标的默认高度
-    private var underLineSpacing: CGFloat = 5           //下标和页眉间的间距
-    private var underLineDefaultColor: UIColor = #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1)
-    private var underLineFilletedCorner: Bool = true    //存储下标边框状态
-    private var underLineHiddenState: Bool = false      //存储下标的隐藏状态
+    private var lineHeight: CGFloat = 6            //下标的默认高度
+    private var lineSpacing: CGFloat = 5           //下标和页眉间的间距
+    private var lineDefaultTint: UIColor = #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1)
+    
     //页眉
-    private var pageHeaderSpacing: CGFloat = 10         //页眉之间的间距
-    private var pageHeaderLRMargin: CGFloat = 20        //页眉和容器左右两边的边距
-    private var pageHeaderTopMargin: CGFloat = 0        //页眉和容器上面的边距
-    private var pageHeaderDefaultTint: UIColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
+    private var headerSpacing: CGFloat = 10         //页眉之间的间距
+    private var headerLRMargin: CGFloat = 20        //页眉和容器左右两边的边距
+    private var headerTopMargin: CGFloat = 0        //页眉和容器上面的边距
+    private var headerDefaultTint: UIColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
     //容器
     private var containerDefaultTint: UIColor = #colorLiteral(red: 0.4745098054, green: 0.8392156959, blue: 0.9764705896, alpha: 1)         //容器背景颜色
     
@@ -99,12 +91,12 @@ class PageController: UIView {
     //状态参数
     //页眉
     private var titles: [String]                                //页眉标题集合
-    private lazy var pageHeaders: [PageHeader] = []                //页眉集合
-    private var currentIndex: Int = -1                             //当前已选中的页眉的索引
+    private lazy var headers: [PageHeader] = []                //页眉集合
+    private var currentHeaderIndex: Int = -1                             //当前已选中的页眉的索引
     
     
     //子View实例
-    private lazy var pageHeaderContainer: UIScrollView = {          //容器
+    private lazy var container: UIScrollView = {          //容器
         
         //frame设置
         let scrollView = UIScrollView(frame: .zero)
@@ -126,7 +118,7 @@ class PageController: UIView {
         view.translatesAutoresizingMaskIntoConstraints = false
         
         //属性设置
-        view.backgroundColor = underLineDefaultColor
+        view.backgroundColor = lineDefaultTint
         
         return view
     }()
@@ -155,6 +147,7 @@ class PageController: UIView {
     //从 xib 或者 storyboard中构造
     required init?(coder: NSCoder) {
         
+        // FIXME: 只能手动输入storyboard name和所属ViewController的identify，待修复完善..
         let ViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "woyuViewController")
         if let dataSource = ViewController as? PageHeaderControllerDataSource { self.dataSource = dataSource }
         
@@ -186,14 +179,14 @@ extension PageController {
     //创建页眉容器
     private func createPageHeaderContainer() {
         
-        self.addSubview(pageHeaderContainer)
+        self.addSubview(container)
         
         //autolayout设置
         NSLayoutConstraint.activate([
-            pageHeaderContainer.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            pageHeaderContainer.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-            pageHeaderContainer.topAnchor.constraint(equalTo: self.topAnchor),
-            pageHeaderContainer.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+            container.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            container.topAnchor.constraint(equalTo: self.topAnchor),
+            container.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
     }
     
@@ -202,7 +195,7 @@ extension PageController {
     private func createPageHeaders() {
         
         //从代理函数中获取页眉标题数据源
-        if let titles = dataSource?.SetPageHeaderTitlesTo(self, pageHeaders: pageHeaders) { self.titles = titles }
+        if let titles = dataSource?.SetPageHeaderTitlesTo(self, pageHeaders: headers) { self.titles = titles }
         
         //根据标题初始化页眉
         for (index, title) in titles.enumerated() {
@@ -211,37 +204,37 @@ extension PageController {
             let pageHeader = PageHeader(index, title)
             
             //设置页眉属性
-            pageHeader.backgroundColor = pageHeaderDefaultTint
+            pageHeader.backgroundColor = headerDefaultTint
             
             //设置页眉手势
             setupGesture(to: pageHeader)
             
             //添加页眉进容器
-            pageHeaderContainer.addSubview(pageHeader)
+            container.addSubview(pageHeader)
             
             //设置页眉约束
-            if let prePageHeader = pageHeaders.last {
+            if let prePageHeader = headers.last {
                 //对其它页眉
-                pageHeader.leadingAnchor.constraint(equalTo: prePageHeader.trailingAnchor, constant: pageHeaderSpacing, identifier: "leading").isActive = true
+                pageHeader.leadingAnchor.constraint(equalTo: prePageHeader.trailingAnchor, constant: headerSpacing, identifier: "headerLeading").isActive = true
             } else {
                 //对于第一个页眉
-                pageHeader.leadingAnchor.constraint(equalTo: pageHeaderContainer.leadingAnchor, constant: pageHeaderLRMargin, identifier: "leading").isActive = true
+                pageHeader.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: headerLRMargin, identifier: "headerLeading").isActive = true
             }
             
             NSLayoutConstraint.activate([
-                pageHeader.topAnchor.constraint(equalTo: pageHeaderContainer.topAnchor, constant: pageHeaderTopMargin, identifier: "top"),
-                pageHeader.widthAnchor.constraint(equalToConstant: pageHeader.textSize.width, identifier: "width"),
-                pageHeader.heightAnchor.constraint(equalTo: self.heightAnchor, constant: -underLineHeight - pageHeaderTopMargin - underLineSpacing, identifier: "height")
+                pageHeader.topAnchor.constraint(equalTo: container.topAnchor, constant: headerTopMargin, identifier: "headerTop"),
+                pageHeader.widthAnchor.constraint(equalToConstant: pageHeader.textSize.width, identifier: "headerWidth"),
+                pageHeader.heightAnchor.constraint(equalTo: container.heightAnchor, constant: -lineHeight - headerTopMargin - lineSpacing, identifier: "headerHeight")
             ])
             
             //添加页眉进集合
-            pageHeaders.append(pageHeader)
+            headers.append(pageHeader)
         }
         
         //对容器的contentSize进行约束
-        if let lastPageHeader = pageHeaders.last {
+        if let lastPageHeader = headers.last {
             
-            lastPageHeader.trailingAnchor.constraint(equalTo: pageHeaderContainer.trailingAnchor, constant: -pageHeaderLRMargin).isActive = true
+            lastPageHeader.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -headerLRMargin).isActive = true
         }
     }
     
@@ -249,25 +242,22 @@ extension PageController {
     //创建页眉下标
     private func createUnderLine() {
         
-        guard let firstPageHeader = pageHeaders.first else { return }   //获取第一个页眉
+        guard let firstPageHeader = headers.first else { return }   //获取第一个页眉
         pageHeaderSwitcher(switchTo: firstPageHeader.index)
         
-        if underLineFilletedCorner {    //下标切圆角
-            underLine.layer.cornerRadius = underLineHeight / 2
-            underLine.layer.masksToBounds = true
-        }
+        //切圆角
+        underLine.layer.cornerRadius = lineHeight / 2
+        underLine.layer.masksToBounds = true
         
-        pageHeaderContainer.addSubview(underLine)
+        container.addSubview(underLine)
         
         //设置autolayout参数
         NSLayoutConstraint.activate([
-            underLine.topAnchor.constraint(equalTo: firstPageHeader.bottomAnchor, constant: underLineSpacing, identifier: "top"),
-            underLine.centerXAnchor.constraint(equalTo: firstPageHeader.centerXAnchor, constant: 0, identifier: "centerX"),
-            underLine.widthAnchor.constraint(equalTo: firstPageHeader.widthAnchor, constant: 0, identifier: "width"),
-            underLine.heightAnchor.constraint(equalToConstant: underLineHeight, identifier: "height")
+            underLine.topAnchor.constraint(equalTo: firstPageHeader.bottomAnchor, constant: lineSpacing, identifier: "lineTop"),
+            underLine.centerXAnchor.constraint(equalTo: firstPageHeader.centerXAnchor, constant: 0, identifier: "lineCenterX"),
+            underLine.widthAnchor.constraint(equalTo: firstPageHeader.widthAnchor, constant: 0, identifier: "lineWidth"),
+            underLine.heightAnchor.constraint(equalToConstant: lineHeight, identifier: "lineHeight")
         ])
-        
-        underLine.isHidden = underLineHiddenState
     }
 }
 
@@ -301,27 +291,27 @@ extension PageController {
     //页眉切换器
     private func pageHeaderSwitcher(switchTo targetIndex: Int) {
         
-        if targetIndex != currentIndex {
+        if targetIndex != currentHeaderIndex {
             
             headerSelectStateManager(selection: targetIndex)
             headerSizeAdjuster(sizing: targetIndex)
             
-            currentIndex = targetIndex  //记录新选中的页眉索引
+            currentHeaderIndex = targetIndex  //记录新选中的页眉索引
         }
     }
     
     //管理页眉的选中状态
     private func headerSelectStateManager(selection targetIndex: Int) {
         
-        if currentIndex >= 0 { pageHeaders[currentIndex].isSelected = false }
-        pageHeaders[targetIndex].isSelected = true
+        if currentHeaderIndex >= 0 { headers[currentHeaderIndex].isSelected = false }
+        headers[targetIndex].isSelected = true
     }
     
     //根据选中后的页眉字体动态调整页眉的大小
     private func headerSizeAdjuster(sizing targetIndex: Int) {
         
-        if currentIndex >= 0 { pageHeaders[currentIndex].constraint(withIdentify: "width")?.constant = pageHeaders[currentIndex].textSize.width }
-        pageHeaders[targetIndex].constraint(withIdentify: "width")?.constant = pageHeaders[targetIndex].textSize.width
+        if currentHeaderIndex >= 0 { headers[currentHeaderIndex].constraint(withIdentify: "headerWidth")?.constant = headers[currentHeaderIndex].textSize.width }
+        headers[targetIndex].constraint(withIdentify: "headerWidth")?.constant = headers[targetIndex].textSize.width
         
         layoutIfNeeded()
     }

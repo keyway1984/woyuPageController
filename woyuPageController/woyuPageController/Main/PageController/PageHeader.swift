@@ -19,8 +19,8 @@ class PageHeader: UIView {
     var textSize: CGSize = .zero  //页眉标题尺寸
     var textFont: UIFont = UIFont.boldSystemFont(ofSize: 13)    //页眉标题字体（非选中状态）
     var textFontHL: UIFont = UIFont.boldSystemFont(ofSize: 18)  //页眉标题字体（选中状态）
-    var textTintColor: UIColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)  //页眉字体颜色（非选中状态）
-    var textTintColorHL: UIColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)   //页眉字体颜色（选中状态）
+    var textTint: UIColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1)  //页眉字体颜色（非选中状态）
+    var textTintHL: UIColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)   //页眉字体颜色（选中状态）
     
     
     //状态参数
@@ -35,7 +35,7 @@ class PageHeader: UIView {
             selectionStateManger(headerBody)
         }
     }
-    var useAnimation: Bool = true   //缩放动画开关
+    var fontAnimat: Bool = true   //缩放动画开关
     
     
     
@@ -95,9 +95,9 @@ extension PageHeader {
         
         //autolayout设置
         NSLayoutConstraint.activate([
-            headerBody.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0, identifier: "bottom"),
-            headerBody.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0, identifier: "leading"),
-            headerBody.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 0, identifier: "trailing")
+            headerBody.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: 0, identifier: "bodyBottom"),
+            headerBody.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 0, identifier: "bodyLeading"),
+            headerBody.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: 0, identifier: "bodyTrailing")
         ])
     }
 }
@@ -110,12 +110,12 @@ extension PageHeader {
 
         if selectedState {
 
-            body.textColor = textTintColorHL
-            if useAnimation { body.fontsizeAnimat(textFontHL, withDuration: 0.1) } else { body.font = textFontHL }
+            body.textColor = textTintHL
+            if fontAnimat { body.fontsizeAnimat(textFontHL, withDuration: 0.1) } else { body.font = textFontHL }
 
         } else {
 
-            body.textColor = textTintColor
+            body.textColor = textTint
             body.font = textFont
         }
 
