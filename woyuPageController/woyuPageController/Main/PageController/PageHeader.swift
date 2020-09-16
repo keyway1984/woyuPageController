@@ -50,7 +50,6 @@ class PageHeader: UIView {
         label.tag = index
         label.numberOfLines = 1
         label.textAlignment = .center
-        selectionStateManger(label)
 
         return label
     }()
