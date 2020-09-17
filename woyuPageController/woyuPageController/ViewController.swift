@@ -14,11 +14,7 @@ class ViewController: UIViewController {
     // MARK: - 实例
 
     // 页眉控制器
-    private lazy var pageHeader: PageController = {
-        let pagecontroller = PageController(dataSource: self)
-
-        return pagecontroller
-    }()
+    private lazy var pageHeader = PageController(dataSource: self, delegate: self)
 
     // 页眉标题数据源
     private let titles: [String] = ["指定标题0", "指定标题1", "指定标题2", "指定标题3", "指定标题4", "指定标题5", "指定标题6", "指定标题7"]
@@ -52,7 +48,7 @@ extension ViewController {
 
 extension ViewController: PageControllerDataSource {
     // 指定页眉/页眉数量
-    func pageController(_: PageController, numberOfPagesInContainer _: UIScrollView) -> Int {
+    func pageController(_: PageController, numberOfPagesInContainer _: PageContainer) -> Int {
         8
     }
 
@@ -66,7 +62,12 @@ extension ViewController: PageControllerDataSource {
         header.textTintHL = #colorLiteral(red: 0.9999960065, green: 1, blue: 1, alpha: 1)
         header.textFont = UIFont.boldSystemFont(ofSize: 10)
         header.textFontHL = UIFont.boldSystemFont(ofSize: 18)
+        header.LRMargin = 8
+        header.TopMargin = 1
+        header.spacing = 5
 
         return header
     }
 }
+
+extension ViewController: PageControllerDelegateLayout {}

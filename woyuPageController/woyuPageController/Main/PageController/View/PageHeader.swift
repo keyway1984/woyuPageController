@@ -8,8 +8,6 @@
 
 import UIKit
 
-// MARK: - PageHeader 类定义
-
 class PageHeader: UIView {
     // MARK: - 公有属性
 
@@ -19,6 +17,9 @@ class PageHeader: UIView {
     var textFontHL = UIFont.boldSystemFont(ofSize: 18) // 页眉标题字体（选中状态）
     var textTint: UIColor = #colorLiteral(red: 0.003166038077, green: 0.003167069284, blue: 0.003165812464, alpha: 1) // 页眉字体颜色（非选中状态）
     var textTintHL: UIColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) // 页眉字体颜色（选中状态）
+    var spacing: CGFloat = 10 // 页眉之间的间距
+    var LRMargin: CGFloat = 20 // 页眉和容器左右两边的边距
+    var TopMargin: CGFloat = 0 // 页眉和容器上面的边距
 
     // 状态参数
     let text: String // 页眉标题
