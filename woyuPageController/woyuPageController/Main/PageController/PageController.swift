@@ -20,6 +20,7 @@ class PageController: UIView {
 
     // 状态参数
     private lazy var headers: [PageHeader] = [] // 页眉集合
+    private lazy var pages: [PageTable] = [] // 页面集合
     private var selectedHeaderIndex: Int = -1 // 当前已选中的页眉的索引
     private var showUnderLine: Bool { // 如果不显示下标，则将下标的相关尺寸设置为0
         get { underLineState }
@@ -76,6 +77,7 @@ extension PageController {
         createPageContainer()
         createHeaders()
         createUnderLine()
+        createPageTables()
     }
 
     // 根据代理函数的返回值更新相关属性
@@ -107,6 +109,10 @@ extension PageController {
     private func createPageContainer() {
         addSubview(pageTableContainer)
 
+        // 属性设置
+        pageTableContainer.backgroundColor = #colorLiteral(red: 0.6666666865, green: 0.6666666865, blue: 0.6666666865, alpha: 1)
+        pageTableContainer.isPagingEnabled = true
+
         // autolayout设置
         NSLayoutConstraint.activate([
             pageTableContainer.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -134,16 +140,16 @@ extension PageController {
             // 设置页眉约束
             if let preHeader = headers.last {
                 // 对其它页眉
-                header.leadingAnchor.constraint(equalTo: preHeader.trailingAnchor, constant: header.spacing, identifier: "headerLeading").isActive = true
+                header.leadingAnchor.constraint(equalTo: preHeader.trailingAnchor, constant: header.spacing, identifier: "headerLeading\(index)").isActive = true
             } else {
                 // 对于第一个页眉
-                header.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: header.LRMargin, identifier: "headerLeading").isActive = true
+                header.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: header.LRMargin, identifier: "headerLeading\(index)").isActive = true
             }
 
             NSLayoutConstraint.activate([
-                header.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: header.TopMargin, identifier: "headerTop"),
-                header.widthAnchor.constraint(equalToConstant: header.textSize.width, identifier: "headerWidth"),
-                header.heightAnchor.constraint(equalTo: headerContainer.heightAnchor, constant: -underLine.height - header.TopMargin - underLine.spacing, identifier: "headerHeight"),
+                header.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: header.TopMargin, identifier: "headerTop\(index)"),
+                header.widthAnchor.constraint(equalToConstant: header.textSize.width, identifier: "headerWidth\(index)"),
+                header.heightAnchor.constraint(equalTo: headerContainer.heightAnchor, constant: -underLine.height - header.TopMargin - underLine.spacing, identifier: "headerHeight\(index)"),
             ])
 
             // 添加页眉进集合
@@ -153,6 +159,39 @@ extension PageController {
         // 对容器的contentSize进行约束
         if let lastHeader = headers.last {
             lastHeader.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -lastHeader.LRMargin).isActive = true
+        }
+    }
+
+    // 创建页面
+    private func createPageTables() {
+        for index in 0 ..< numberOfItems {
+            let page = PageTable()
+            page.buildLabel(title: "\(index)")
+            // 添加页面进容器
+            pageTableContainer.addSubview(page.view)
+
+            // 设置页面约束
+            if let prePage = pages.last {
+                // 对于其它页面
+                page.view.leadingAnchor.constraint(equalTo: prePage.view.trailingAnchor, identifier: "pageLeading\(index)").isActive = true
+            } else {
+                // 对于第一个页面
+                page.view.leadingAnchor.constraint(equalTo: pageTableContainer.leadingAnchor, identifier: "pageLeading\(index)").isActive = true
+            }
+            // 设置其它约束
+            NSLayoutConstraint.activate([
+                page.view.topAnchor.constraint(equalTo: pageTableContainer.topAnchor, identifier: "pageTop\(index)"),
+                page.view.widthAnchor.constraint(equalToConstant: UIScreen.main.bounds.width, identifier: "pageWidth\(index)"),
+                page.view.heightAnchor.constraint(equalTo: pageTableContainer.heightAnchor, identifier: "pageHeight\(index)"),
+            ])
+
+            // 添加页面进集合
+            pages.append(page)
+        }
+
+        // 对容器的contentSize进行约束
+        if let lastPage = pages.last {
+            lastPage.view.trailingAnchor.constraint(equalTo: pageTableContainer.trailingAnchor).isActive = true
         }
     }
 
@@ -217,14 +256,18 @@ extension PageController {
 
     // 更新页眉的选中状态
     private func selectedTarget(_ header: PageHeader) {
-        if selectedHeaderIndex >= 0 { headers[selectedHeaderIndex].isSelected = false }
+        if selectedHeaderIndex >= 0 {
+            headers[selectedHeaderIndex].isSelected = false
+        }
         header.isSelected = true
     }
 
     // 根据选中后的页眉字体的变化重新调整页眉的大小
     private func resizeTarget(_ header: PageHeader) {
-        if selectedHeaderIndex >= 0 { headers[selectedHeaderIndex].constraint(withIdentify: "headerWidth")?.constant = headers[selectedHeaderIndex].textSize.width }
-        header.constraint(withIdentify: "headerWidth")?.constant = header.textSize.width
+        if selectedHeaderIndex >= 0 {
+            headers[selectedHeaderIndex].constraint(withIdentify: "headerWidth\(selectedHeaderIndex)")?.constant = headers[selectedHeaderIndex].textSize.width
+        }
+        header.constraint(withIdentify: "headerWidth\(header.index)")?.constant = header.textSize.width
     }
 
     // 移动下标到所选中的页眉

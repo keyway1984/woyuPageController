@@ -73,3 +73,24 @@ extension UILabel {
         self.font = font
     }
 }
+
+//MARK: - CGFloat
+extension CGFloat {
+    //创建cgfloat格式的随机数
+    static func random() -> CGFloat {
+        return CGFloat(arc4random()) / CGFloat(UInt32.max)
+    }
+}
+
+//MARK: - UIColor
+extension UIColor {
+    //使用随机数获取随机颜色
+    static func random() -> UIColor {
+         return UIColor(
+            red:   .random(),
+            green: .random(),
+            blue:  .random(),
+            alpha: 1.0
+         )
+     }
+}
