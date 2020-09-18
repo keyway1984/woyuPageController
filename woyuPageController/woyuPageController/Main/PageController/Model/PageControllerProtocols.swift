@@ -18,6 +18,9 @@ protocol PageControllerDataSource: AnyObject {
 
     // 获取初始化创建的页眉
     func pageController(_ controller: PageController, headerForPageAt index: Int) -> PageHeader
+    
+    //获取初始化创建的页面
+    func pageController(_ controller: PageController, pageForHeaderAt index: Int) -> UIViewController
 }
 
 // UI布局

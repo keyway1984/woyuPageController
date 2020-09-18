@@ -47,12 +47,13 @@ extension ViewController {
 // MARK: - PageHeaderControllerDataSource Methods
 
 extension ViewController: PageControllerDataSource {
+    
     // 指定页眉/页眉数量
     func pageController(_: PageController, numberOfPagesInContainer _: PageContainer) -> Int {
         8
     }
 
-    // 初始化标题
+    // 指定页眉
     func pageController(_: PageController, headerForPageAt index: Int) -> PageHeader {
         // 创建页眉实例
         let header = PageHeader(index, titles[index])
@@ -67,6 +68,40 @@ extension ViewController: PageControllerDataSource {
         header.spacing = 5
 
         return header
+    }
+    
+    //指定页面
+    func pageController(_ controller: PageController, pageForHeaderAt index: Int) -> UIViewController {
+        
+        //初始化ViewController
+        let vc = UIViewController()
+        vc.view.frame = .zero
+        vc.view.translatesAutoresizingMaskIntoConstraints = false
+        vc.view.backgroundColor = UIColor.random()
+        
+        //给vc的view加入一个便于识别的label
+        let label = UILabel(frame: .zero)
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        label.text = "~\(index)~"
+        label.font = UIFont.boldSystemFont(ofSize: 60)
+        label.textColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        label.textAlignment = .center
+        label.sizeToFit()
+
+        vc.view.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: vc.view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: vc.view.centerYAnchor),
+        ])
+        
+        //将创建的vc作为当前vc的子控制器
+        self.addChild(vc)
+        self.view.addSubview(vc.view)
+        vc.didMove(toParent: self)
+        
+        return vc
     }
 }
 

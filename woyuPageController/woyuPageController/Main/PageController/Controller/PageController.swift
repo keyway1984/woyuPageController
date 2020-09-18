@@ -20,7 +20,7 @@ class PageController: UIView {
 
     // 状态参数
     private lazy var headers: [PageHeader] = [] // 页眉集合
-    private lazy var pages: [PageTable] = [] // 页面集合
+    private lazy var pages: [UIViewController] = [] // 页面集合
     private var selectedHeaderIndex: Int = -1 // 当前已选中的页眉的索引
     private var showUnderLine: Bool { // 如果不显示下标，则将下标的相关尺寸设置为0
         get { underLineState }
@@ -113,6 +113,9 @@ extension PageController {
         pageTableContainer.backgroundColor = #colorLiteral(red: 0.6666666865, green: 0.6666666865, blue: 0.6666666865, alpha: 1)
         pageTableContainer.isPagingEnabled = true
 
+        // 设置代理
+        pageTableContainer.delegate = self
+
         // autolayout设置
         NSLayoutConstraint.activate([
             pageTableContainer.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -165,8 +168,9 @@ extension PageController {
     // 创建页面
     private func createPageTables() {
         for index in 0 ..< numberOfItems {
-            let page = PageTable()
-            page.buildLabel(title: "\(index)")
+            // 从代理函数获取ViewController
+            guard let page = dataSource?.pageController(self, pageForHeaderAt: index) else { return }
+
             // 添加页面进容器
             pageTableContainer.addSubview(page.view)
 
@@ -181,7 +185,7 @@ extension PageController {
             // 设置其它约束
             NSLayoutConstraint.activate([
                 page.view.topAnchor.constraint(equalTo: pageTableContainer.topAnchor, identifier: "pageTop\(index)"),
-                page.view.widthAnchor.constraint(equalToConstant: UIScreen.main.bounds.width, identifier: "pageWidth\(index)"),
+                page.view.widthAnchor.constraint(equalTo: pageTableContainer.widthAnchor, identifier: "pageWidth\(index)"),
                 page.view.heightAnchor.constraint(equalTo: pageTableContainer.heightAnchor, identifier: "pageHeight\(index)"),
             ])
 
@@ -221,6 +225,7 @@ extension PageController {
 
 // 页眉交互
 extension PageController {
+    // 页眉
     // 设置手势
     private func setupGesture(to target: PageHeader) {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(pageHeaderGestureResponder(_:)))
@@ -233,18 +238,49 @@ extension PageController {
     @objc private func pageHeaderGestureResponder(_ sender: UITapGestureRecognizer) {
         guard let selectedHeader = sender.view as? PageHeader else { return }
 
-        switchToTarget(selectedHeader)
+        switchToHeader(selectedHeader)
+        containerAdjust(forTarget: selectedHeader)
+        turnToPage(pages[selectedHeader.index])
+    }
+}
+
+// 页面交互
+extension PageController: UIScrollViewDelegate {
+    // 监听页面的滑动位移
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // 确保监听的对象容器是页面容器而非页眉容器
+        if scrollView == pageTableContainer, scrollView.isTracking { // 确保以下代码仅在用户触摸屏幕时才触发
+            let offsetScale = pageTableContainer.contentOffset.x / pageTableContainer.frame.size.width // 获取容器contentView的滑动系数
+            let targetIndex = Int(roundf(Float(offsetScale))) // 将滑动系数四舍五入后获取要切换的目标页眉索引
+            switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
+        }
+    }
+
+    // 监听当前页面索引
+    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity _: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+        // 确保监听的对象容器是页面容器而非页眉容器
+        if scrollView == pageTableContainer {
+            let targetIndex = Int(targetContentOffset.pointee.x / pageTableContainer.frame.size.width) // 获取当前页面索引
+            switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
+            containerAdjust(forTarget: headers[targetIndex]) // 根据当前页面索引进行对应页眉的容器居中校正
+        }
     }
 }
 
 // MARK: - UI相关方法
 
+// 页面相关方法
+extension PageController {
+    // 切换页面
+    private func turnToPage(_ page: UIViewController) {
+        pageTableContainer.setContentOffset(page.view.frame.origin, animated: false)
+    }
+}
+
 // 页眉相关方法
 extension PageController {
     // 切换页眉
-    private func switchToTarget(_ header: PageHeader) {
-        containerAdjust(forTarget: header)
-
+    private func switchToHeader(_ header: PageHeader) {
         if header.index != selectedHeaderIndex {
             selectedTarget(header)
             resizeTarget(header)
@@ -269,26 +305,10 @@ extension PageController {
         }
         header.constraint(withIdentify: "headerWidth\(header.index)")?.constant = header.textSize.width
     }
+}
 
-    // 移动下标到所选中的页眉
-    private func moveUnderLine(toTarget header: PageHeader) {
-        // 从代理函数中获取页眉下标是否显示的指示
-        guard showUnderLine else { return }
-
-        if selectedHeaderIndex >= 0 {
-            headerContainer.constraint(withIdentify: "lineCenterX\(selectedHeaderIndex)")?.isActive = false
-            headerContainer.constraint(withIdentify: "lineWidth\(selectedHeaderIndex)")?.isActive = false
-
-            UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseIn, animations: {
-                NSLayoutConstraint.activate([
-                    self.underLine.centerXAnchor.constraint(equalTo: header.centerXAnchor, identifier: "lineCenterX\(header.index)"),
-                    self.underLine.widthAnchor.constraint(equalTo: header.widthAnchor, identifier: "lineWidth\(header.index)"),
-                ])
-                self.layoutIfNeeded()
-            }, completion: nil)
-        }
-    }
-
+// 页眉容器相关方法
+extension PageController {
     // 将选中的页眉滑动到容器中央
     private func containerAdjust(forTarget header: PageHeader) {
         // 容器沿水平方向滑动的位移上限
@@ -310,6 +330,29 @@ extension PageController {
         default:
             // 如果补正距离超过了容器允许的位移范围上限，就将容器反向复位
             headerContainer.setContentOffset(CGPoint(x: upperLimit, y: 0), animated: true)
+        }
+    }
+}
+
+// 下标相关方法
+extension PageController {
+    // 移动下标到所选中的页眉
+    // 点击页眉触发
+    private func moveUnderLine(toTarget header: PageHeader) {
+        // 从代理函数中获取页眉下标是否显示的指示
+        guard showUnderLine else { return }
+
+        if selectedHeaderIndex >= 0 {
+            headerContainer.constraint(withIdentify: "lineCenterX\(selectedHeaderIndex)")?.isActive = false
+            headerContainer.constraint(withIdentify: "lineWidth\(selectedHeaderIndex)")?.isActive = false
+
+            UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseIn, animations: {
+                NSLayoutConstraint.activate([
+                    self.underLine.centerXAnchor.constraint(equalTo: header.centerXAnchor, identifier: "lineCenterX\(header.index)"),
+                    self.underLine.widthAnchor.constraint(equalTo: header.widthAnchor, identifier: "lineWidth\(header.index)"),
+                ])
+                self.layoutIfNeeded()
+            }, completion: nil)
         }
     }
 }
