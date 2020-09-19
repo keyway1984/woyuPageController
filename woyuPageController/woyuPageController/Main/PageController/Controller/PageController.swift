@@ -14,7 +14,7 @@ class PageController: UIView {
 
     // 代理引用
     weak var dataSource: PageControllerDataSource? // 数据源
-    weak var delegate: PageControllerDelegateLayout? // 布局
+    weak var layout: PageControllerDelegateLayout? // 布局
 
     // MARK: - 私有属性
 
@@ -46,9 +46,9 @@ class PageController: UIView {
 
     // 指定构造器
     // 通过指定托管对象构造（需遵从相关协议）
-    init(dataSource: PageControllerDataSource, delegate: PageControllerDelegateLayout) {
-        self.dataSource = dataSource
-        self.delegate = delegate
+    init(viewController: UIViewController) {
+        if let dataSource = viewController as? PageControllerDataSource { self.dataSource = dataSource }
+        if let layout = viewController as? PageControllerDelegateLayout { self.layout = layout }
         super.init(frame: .zero)
         translatesAutoresizingMaskIntoConstraints = false
         buildSubViews()
@@ -83,13 +83,13 @@ extension PageController {
     // 根据代理函数的返回值更新相关属性
     private func updateProperty() {
         // 更新页眉容器高度
-        if let height = delegate?.pageController(self, heightOfHeaderContainer: headerContainer) { headerContainer.height = height }
+        if let height = layout?.pageController(self, heightOfHeaderContainer: headerContainer) { headerContainer.height = height }
 
         // 更新页眉/页面数量
         if let nums = dataSource?.pageController(self, numberOfPagesInContainer: pageTableContainer) { numberOfItems = nums }
 
         // 更新下标属性
-        if let state = delegate?.pageController(self, showUnderLineForSelectedHeader: &underLine) { showUnderLine = state }
+        if let state = layout?.pageController(self, showUnderLineForSelectedHeader: &underLine) { showUnderLine = state }
     }
 
     // 创建页眉容器
@@ -214,9 +214,9 @@ extension PageController {
         // 设置autolayout参数
         NSLayoutConstraint.activate([
             underLine.topAnchor.constraint(equalTo: firstPageHeader.bottomAnchor, constant: underLine.spacing, identifier: "lineTop"),
-            underLine.centerXAnchor.constraint(equalTo: firstPageHeader.centerXAnchor, identifier: "lineCenterX\(firstPageHeader.index)"),
-            underLine.widthAnchor.constraint(equalTo: firstPageHeader.widthAnchor, identifier: "lineWidth\(firstPageHeader.index)"),
             underLine.heightAnchor.constraint(equalToConstant: underLine.height, identifier: "lineHeight"),
+            underLine.leadingAnchor.constraint(equalTo: firstPageHeader.leadingAnchor, identifier: "lineLeading\(firstPageHeader.index)"),
+            underLine.trailingAnchor.constraint(equalTo: firstPageHeader.trailingAnchor, identifier: "lineTrailing\(firstPageHeader.index)"),
         ])
     }
 }
@@ -239,8 +239,11 @@ extension PageController {
         guard let selectedHeader = sender.view as? PageHeader else { return }
 
         switchToHeader(selectedHeader)
-        containerAdjust(forTarget: selectedHeader)
+        moveUnderLine(whenClickedHeader: selectedHeader)
+        containerAdjust(whenClickedHeader: selectedHeader)
         turnToPage(pages[selectedHeader.index])
+
+        selectedHeaderIndex = selectedHeader.index // 更新当前已选中的页眉索引
     }
 }
 
@@ -252,17 +255,25 @@ extension PageController: UIScrollViewDelegate {
         if scrollView == pageTableContainer, scrollView.isTracking { // 确保以下代码仅在用户触摸屏幕时才触发
             let offsetScale = pageTableContainer.contentOffset.x / pageTableContainer.frame.size.width // 获取容器contentView的滑动系数
             let targetIndex = Int(roundf(Float(offsetScale))) // 将滑动系数四舍五入后获取要切换的目标页眉索引
+
             switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
+            moveUnderLine(whenDraggingPage: offsetScale)
+
+            selectedHeaderIndex = targetIndex // 更新当前已选中的页眉索引
         }
     }
 
-    // 监听当前页面索引
+    // 监听翻页动作目标页面索引
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity _: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         // 确保监听的对象容器是页面容器而非页眉容器
         if scrollView == pageTableContainer {
             let targetIndex = Int(targetContentOffset.pointee.x / pageTableContainer.frame.size.width) // 获取当前页面索引
+
             switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
-            containerAdjust(forTarget: headers[targetIndex]) // 根据当前页面索引进行对应页眉的容器居中校正
+            moveUnderLine(whenClickedHeader: headers[targetIndex])
+            containerAdjust(whenClickedHeader: headers[targetIndex]) // 根据当前页面索引进行对应页眉的容器居中校正
+
+            selectedHeaderIndex = targetIndex // 更新当前已选中的页眉索引
         }
     }
 }
@@ -284,8 +295,6 @@ extension PageController {
         if header.index != selectedHeaderIndex {
             selectedTarget(header)
             resizeTarget(header)
-            moveUnderLine(toTarget: header)
-            selectedHeaderIndex = header.index // 更新当前已选中的页眉索引
             layoutIfNeeded()
         }
     }
@@ -310,7 +319,8 @@ extension PageController {
 // 页眉容器相关方法
 extension PageController {
     // 将选中的页眉滑动到容器中央
-    private func containerAdjust(forTarget header: PageHeader) {
+    //点击页眉触发
+    private func containerAdjust(whenClickedHeader header: PageHeader) {
         // 容器沿水平方向滑动的位移上限
         let upperLimit = headerContainer.contentSize.width - headerContainer.frame.size.width
         guard upperLimit > 0 else { return }
@@ -332,28 +342,102 @@ extension PageController {
             headerContainer.setContentOffset(CGPoint(x: upperLimit, y: 0), animated: true)
         }
     }
+    
+    // FIXME: 待完成
+    //滑动页面触发
+    private func containerAdjust(whenDraggingPage offsetScale: CGFloat) {
+        
+        // 容器沿水平方向滑动的位移上限
+        let upperLimit = headerContainer.contentSize.width - headerContainer.frame.size.width
+        guard upperLimit > 0 else { return }
+        
+        // 获取页面的滑动方向
+        let direction = pageTableContainer.panGestureRecognizer.translation(in: self).x > 0
+
+        var currentIndex: Int = 0 // 当前页眉索引
+        var targetIndex: Int = 0 // 滑动目标页眉索引
+        var percent: CGFloat = 0 // 翻页百分比
+        let ceilIndex = Int(ceil(Double(offsetScale))) // 位移比例的向上取整数
+        let floorIndex = Int(floor(Double(offsetScale))) // 位移比例的向下取整数
+
+        if direction {
+            // 朝左滑动
+            currentIndex = ceilIndex
+            targetIndex = floorIndex
+            percent = CGFloat(ceilIndex) - offsetScale
+        } else {
+            // 朝右滑动
+            currentIndex = floorIndex
+            targetIndex = ceilIndex
+            percent = offsetScale - CGFloat(floorIndex)
+        }
+        
+        // 让目标页眉在容器中居中所需要的补正距离
+        let currentOffset = headers[currentIndex].center.x - (headerContainer.frame.size.width / 2)
+        let offset = headers[targetIndex].center.x - (headerContainer.frame.size.width / 2)
+        
+        guard offset >= 0 && offset <= upperLimit else { return }
+        
+        
+    }
 }
 
 // 下标相关方法
 extension PageController {
     // 移动下标到所选中的页眉
     // 点击页眉触发
-    private func moveUnderLine(toTarget header: PageHeader) {
+    private func moveUnderLine(whenClickedHeader header: PageHeader) {
         // 从代理函数中获取页眉下标是否显示的指示
-        guard showUnderLine else { return }
+        guard showUnderLine, !headers.isEmpty else { return }
 
         if selectedHeaderIndex >= 0 {
-            headerContainer.constraint(withIdentify: "lineCenterX\(selectedHeaderIndex)")?.isActive = false
-            headerContainer.constraint(withIdentify: "lineWidth\(selectedHeaderIndex)")?.isActive = false
+            // 目标页眉到第一个页眉leading constant的值
+            let leadingConstant = header.frame.origin.x - headers[0].frame.origin.x
+            // 目标页眉到第一个页眉trailing constant的值
+            let trailingConstant = (header.frame.origin.x - headers[0].frame.origin.x) + (header.frame.size.width - headers[0].frame.size.width)
 
             UIView.animate(withDuration: 0.1, delay: 0, options: .curveEaseIn, animations: {
-                NSLayoutConstraint.activate([
-                    self.underLine.centerXAnchor.constraint(equalTo: header.centerXAnchor, identifier: "lineCenterX\(header.index)"),
-                    self.underLine.widthAnchor.constraint(equalTo: header.widthAnchor, identifier: "lineWidth\(header.index)"),
-                ])
+                self.headerContainer.constraint(withIdentify: "lineLeading\(0)")?.constant = leadingConstant
+                self.headerContainer.constraint(withIdentify: "lineTrailing\(0)")?.constant = trailingConstant
                 self.layoutIfNeeded()
             }, completion: nil)
         }
+    }
+
+    // 滑动页面触发
+    private func moveUnderLine(whenDraggingPage offsetScale: CGFloat) {
+        guard offsetScale > 0, offsetScale < CGFloat(numberOfItems) - 1, !headers.isEmpty else { return }
+
+        // 获取页面的滑动方向
+        let direction = pageTableContainer.panGestureRecognizer.translation(in: self).x > 0
+
+        var currentIndex: Int = 0 // 当前页眉索引
+        var targetIndex: Int = 0 // 滑动目标页眉索引
+        var percent: CGFloat = 0 // 翻页百分比
+        let ceilIndex = Int(ceil(Double(offsetScale))) // 位移比例的向上取整数
+        let floorIndex = Int(floor(Double(offsetScale))) // 位移比例的向下取整数
+
+        if direction {
+            // 朝左滑动
+            currentIndex = ceilIndex
+            targetIndex = floorIndex
+            percent = CGFloat(ceilIndex) - offsetScale
+        } else {
+            // 朝右滑动
+            currentIndex = floorIndex
+            targetIndex = ceilIndex
+            percent = offsetScale - CGFloat(floorIndex)
+        }
+
+        let leading = headers[currentIndex].frame.origin.x - headers[0].frame.origin.x
+        let leadingConstant = headers[targetIndex].frame.origin.x - headers[currentIndex].frame.origin.x
+
+        let trailing = headers[currentIndex].frame.origin.x - headers[0].frame.origin.x + (headers[currentIndex].frame.size.width - headers[0].frame.size.width)
+        let trailingConstant = headers[targetIndex].frame.origin.x - headers[currentIndex].frame.origin.x + (headers[targetIndex].frame.size.width - headers[currentIndex].frame.size.width)
+
+        headerContainer.constraint(withIdentify: "lineLeading\(0)")?.constant = leading + leadingConstant * percent
+        headerContainer.constraint(withIdentify: "lineTrailing\(0)")?.constant = trailing + trailingConstant * percent
+        layoutIfNeeded()
     }
 }
 

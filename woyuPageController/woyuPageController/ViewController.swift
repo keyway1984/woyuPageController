@@ -14,7 +14,7 @@ class ViewController: UIViewController {
     // MARK: - 实例
 
     // 页眉控制器
-    private lazy var pageHeader = PageController(dataSource: self, delegate: self)
+    private lazy var pageHeader = PageController(viewController: self)
 
     // 页眉标题数据源
     private let titles: [String] = ["指定标题0", "指定标题1", "指定标题2", "指定标题3", "指定标题4", "指定标题5", "指定标题6", "指定标题7"]
@@ -47,7 +47,6 @@ extension ViewController {
 // MARK: - PageHeaderControllerDataSource Methods
 
 extension ViewController: PageControllerDataSource {
-    
     // 指定页眉/页眉数量
     func pageController(_: PageController, numberOfPagesInContainer _: PageContainer) -> Int {
         8
@@ -61,25 +60,24 @@ extension ViewController: PageControllerDataSource {
         header.backgroundColor = #colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1)
         header.textTint = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
         header.textTintHL = #colorLiteral(red: 0.9999960065, green: 1, blue: 1, alpha: 1)
-        header.textFont = UIFont.boldSystemFont(ofSize: 10)
-        header.textFontHL = UIFont.boldSystemFont(ofSize: 18)
+        header.textFont = UIFont.boldSystemFont(ofSize: 13)
+        header.textFontHL = UIFont.boldSystemFont(ofSize: 13)
         header.LRMargin = 8
         header.TopMargin = 1
         header.spacing = 5
 
         return header
     }
-    
-    //指定页面
-    func pageController(_ controller: PageController, pageForHeaderAt index: Int) -> UIViewController {
-        
-        //初始化ViewController
+
+    // 指定页面
+    func pageController(_: PageController, pageForHeaderAt index: Int) -> UIViewController {
+        // 初始化ViewController
         let vc = UIViewController()
         vc.view.frame = .zero
         vc.view.translatesAutoresizingMaskIntoConstraints = false
         vc.view.backgroundColor = UIColor.random()
-        
-        //给vc的view加入一个便于识别的label
+
+        // 给vc的view加入一个便于识别的label
         let label = UILabel(frame: .zero)
         label.translatesAutoresizingMaskIntoConstraints = false
 
@@ -95,12 +93,12 @@ extension ViewController: PageControllerDataSource {
             label.centerXAnchor.constraint(equalTo: vc.view.centerXAnchor),
             label.centerYAnchor.constraint(equalTo: vc.view.centerYAnchor),
         ])
-        
-        //将创建的vc作为当前vc的子控制器
-        self.addChild(vc)
-        self.view.addSubview(vc.view)
+
+        // 将创建的vc作为当前vc的子控制器
+        addChild(vc)
+        view.addSubview(vc.view)
         vc.didMove(toParent: self)
-        
+
         return vc
     }
 }
