@@ -22,18 +22,8 @@ class PageController: UIView {
     private lazy var headers: [PageHeader] = [] // 页眉集合
     private lazy var pages: [UIViewController] = [] // 页面集合
     private var selectedHeaderIndex: Int = -1 // 当前已选中的页眉的索引
-    private var showUnderLine: Bool { // 如果不显示下标，则将下标的相关尺寸设置为0
-        get { underLineState }
-        set {
-            underLineState = newValue
-            if !newValue {
-                underLine.height = 0
-                underLine.spacing = 0
-            }
-        }
-    }
+    private var showUnderLine: Bool = true // 是否显示下标
 
-    private var underLineState: Bool = true
     private var numberOfItems: Int = 0 // 页眉/页面的数量
 
     // 子View实例
@@ -149,10 +139,13 @@ extension PageController {
                 header.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: header.LRMargin, identifier: "headerLeading\(index)").isActive = true
             }
 
+            // 根据代理函数指示是否显示页眉下标而计算出不同的页眉高度约束
+            let heightConstant: CGFloat = showUnderLine ? -underLine.height - header.topMargin - underLine.spacing : -header.topMargin - header.bottomMargin
+
             NSLayoutConstraint.activate([
-                header.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: header.TopMargin, identifier: "headerTop\(index)"),
+                header.topAnchor.constraint(equalTo: headerContainer.topAnchor, constant: header.topMargin, identifier: "headerTop\(index)"),
                 header.widthAnchor.constraint(equalToConstant: header.textSize.width, identifier: "headerWidth\(index)"),
-                header.heightAnchor.constraint(equalTo: headerContainer.heightAnchor, constant: -underLine.height - header.TopMargin - underLine.spacing, identifier: "headerHeight\(index)"),
+                header.heightAnchor.constraint(equalTo: headerContainer.heightAnchor, constant: heightConstant, identifier: "headerHeight\(index)"),
             ])
 
             // 添加页眉进集合
@@ -258,7 +251,7 @@ extension PageController: UIScrollViewDelegate {
 
             switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
             moveUnderLine(whenDraggingPage: offsetScale)
-
+            containerAdjust(whenDraggingPage: offsetScale) // 如果不需要做到像斗鱼APP那样在划页的同时移动页眉容器，则这个方法可以去掉
             selectedHeaderIndex = targetIndex // 更新当前已选中的页眉索引
         }
     }
@@ -319,7 +312,7 @@ extension PageController {
 // 页眉容器相关方法
 extension PageController {
     // 将选中的页眉滑动到容器中央
-    //点击页眉触发
+    // 点击页眉触发
     private func containerAdjust(whenClickedHeader header: PageHeader) {
         // 容器沿水平方向滑动的位移上限
         let upperLimit = headerContainer.contentSize.width - headerContainer.frame.size.width
@@ -342,15 +335,15 @@ extension PageController {
             headerContainer.setContentOffset(CGPoint(x: upperLimit, y: 0), animated: true)
         }
     }
-    
-    // FIXME: 待完成
-    //滑动页面触发
+
+    // 滑动页面触发
     private func containerAdjust(whenDraggingPage offsetScale: CGFloat) {
-        
+        // 确保数组不要越界
+        guard offsetScale > 0, offsetScale < CGFloat(numberOfItems) - 1 else { return }
         // 容器沿水平方向滑动的位移上限
         let upperLimit = headerContainer.contentSize.width - headerContainer.frame.size.width
         guard upperLimit > 0 else { return }
-        
+
         // 获取页面的滑动方向
         let direction = pageTableContainer.panGestureRecognizer.translation(in: self).x > 0
 
@@ -360,6 +353,7 @@ extension PageController {
         let ceilIndex = Int(ceil(Double(offsetScale))) // 位移比例的向上取整数
         let floorIndex = Int(floor(Double(offsetScale))) // 位移比例的向下取整数
 
+        // 根据滑动方向不同，各个参数的赋值也不同
         if direction {
             // 朝左滑动
             currentIndex = ceilIndex
@@ -371,14 +365,27 @@ extension PageController {
             targetIndex = ceilIndex
             percent = offsetScale - CGFloat(floorIndex)
         }
-        
-        // 让目标页眉在容器中居中所需要的补正距离
-        let currentOffset = headers[currentIndex].center.x - (headerContainer.frame.size.width / 2)
-        let offset = headers[targetIndex].center.x - (headerContainer.frame.size.width / 2)
-        
-        guard offset >= 0 && offset <= upperLimit else { return }
-        
-        
+
+        // 获取当前页眉和滑动目标页眉之间的距离
+        let constant = headers[targetIndex].center.x - headers[currentIndex].center.x
+        // 获取当前容器已经位移的数量
+        let contentOffset = headers[currentIndex].center.x - (headerContainer.frame.size.width / 2)
+        // 计算出需要补正的距离
+        let offset = contentOffset + constant * percent
+
+        switch offset {
+        case ..<0:
+            // 如果理论补正距离是负值就让容器复位
+            headerContainer.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
+
+        case 0 ... upperLimit:
+            // 如果理论补正距离在容器允许的位移范围内，就按照计算出来的补正距离进行补正
+            headerContainer.setContentOffset(CGPoint(x: offset, y: 0), animated: false)
+
+        default:
+            // 如果补正距离超过了容器允许的位移范围上限，就将容器反向复位
+            headerContainer.setContentOffset(CGPoint(x: upperLimit, y: 0), animated: false)
+        }
     }
 }
 
@@ -406,7 +413,8 @@ extension PageController {
 
     // 滑动页面触发
     private func moveUnderLine(whenDraggingPage offsetScale: CGFloat) {
-        guard offsetScale > 0, offsetScale < CGFloat(numberOfItems) - 1, !headers.isEmpty else { return }
+        // 从代理函数中获取页眉下标是否显示的指示，同时确保数组不要越界
+        guard showUnderLine, offsetScale > 0, offsetScale < CGFloat(numberOfItems) - 1, !headers.isEmpty else { return }
 
         // 获取页面的滑动方向
         let direction = pageTableContainer.panGestureRecognizer.translation(in: self).x > 0
@@ -429,12 +437,15 @@ extension PageController {
             percent = offsetScale - CGFloat(floorIndex)
         }
 
+        // 获取当前下标约束的leading
         let leading = headers[currentIndex].frame.origin.x - headers[0].frame.origin.x
+        // 获取移动到目标页眉leading需要增加的值
         let leadingConstant = headers[targetIndex].frame.origin.x - headers[currentIndex].frame.origin.x
 
         let trailing = headers[currentIndex].frame.origin.x - headers[0].frame.origin.x + (headers[currentIndex].frame.size.width - headers[0].frame.size.width)
         let trailingConstant = headers[targetIndex].frame.origin.x - headers[currentIndex].frame.origin.x + (headers[targetIndex].frame.size.width - headers[currentIndex].frame.size.width)
 
+        // 根据划页动作实时更新下标约束值
         headerContainer.constraint(withIdentify: "lineLeading\(0)")?.constant = leading + leadingConstant * percent
         headerContainer.constraint(withIdentify: "lineTrailing\(0)")?.constant = trailing + trailingConstant * percent
         layoutIfNeeded()

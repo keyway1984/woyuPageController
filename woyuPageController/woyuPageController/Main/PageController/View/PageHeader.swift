@@ -19,7 +19,8 @@ class PageHeader: UIView {
     var textTintHL: UIColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1) // 页眉字体颜色（选中状态）
     var spacing: CGFloat = 10 // 页眉之间的间距
     var LRMargin: CGFloat = 20 // 页眉和容器左右两边的边距
-    var TopMargin: CGFloat = 0 // 页眉和容器上面的边距
+    var topMargin: CGFloat = 0 // 页眉和容器上面的边距
+    var bottomMargin: CGFloat = 0 // 页眉和容器下面的边距
 
     // 状态参数
     let text: String // 页眉标题
