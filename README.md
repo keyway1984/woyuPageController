@@ -54,6 +54,8 @@ protocol PageControllerDelegateLayout: class {
 
 图片中以斗鱼app的样式进行定制。
 > 斗鱼app的样式包括：隐藏下标，页眉标题在点击状态有文本放大动画，在滑动页面的同时页眉容器也会相应移动，包含rightBarItem等。
+
+
 ![image](https://github.com/keyway1984/woyuPageController/blob/master/IMG/ezgif-6-b7663d058344.gif)
 
 
