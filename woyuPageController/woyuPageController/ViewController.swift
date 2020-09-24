@@ -67,7 +67,7 @@ extension ViewController: PageControllerDataSource {
         header.textTint = #colorLiteral(red: 0.2012614608, green: 0.1959747672, blue: 0.2008952796, alpha: 1) // 页眉默认颜色
         header.textTintHL = #colorLiteral(red: 0.9979591966, green: 0.2818490267, blue: 0.1678583622, alpha: 1) // 页眉被选择后的颜色
         header.textFont = UIFont.boldSystemFont(ofSize: 15) // 页眉默认字体
-        header.textFontHL = UIFont.boldSystemFont(ofSize: 22) // 页眉被选择后的字体
+        header.textFontHL = UIFont.boldSystemFont(ofSize: 15) // 页眉被选择后的字体
         header.LRMargin = 8 // 页眉和容器左右之间的距离
         header.topMargin = 3 // 页眉和容器上方的距离
         header.bottomMargin = 5 // 页眉和容器下方的距离
@@ -120,8 +120,16 @@ extension ViewController: PageControllerDelegateLayout {
     }
 
     // 隐藏下标
-    func pageController(_: PageController, showUnderLineForSelectedHeader _: inout PageUnderLine) -> Bool {
-        false
+    func pageController(_: PageController, showUnderLineForSelectedHeader line: inout PageUnderLine) -> Bool {
+        
+        //设置下标相关属性
+        line.backgroundColor = #colorLiteral(red: 0.99063164, green: 0.2880288959, blue: 0.1035054252, alpha: 1)
+        line.height = 5
+        line.spacing = 0
+        //切圆角
+        line.layer.cornerRadius = line.height / 2
+        line.layer.masksToBounds = true
+        return true
     }
 
     // 定制右侧barItem
@@ -131,6 +139,6 @@ extension ViewController: PageControllerDelegateLayout {
         item.width = 40
         // 设置阴影参数
         item.dropShadow(color: UIColor.white, opacity: 1, offset: .zero, radius: 10)
-        return true
+        return false
     }
 }

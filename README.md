@@ -59,6 +59,9 @@ protocol PageControllerDelegateLayout: class {
 ![image](https://github.com/keyway1984/woyuPageController/blob/master/IMG/ezgif-6-b7663d058344.gif)
 
 
+> 当然你也可以打开下标显示，取消标题字体缩放动画，关闭rightBaritem实现通常的效果。
+
+
 ## 使用许可
 
 [MIT](LICENSE) © 魏卧鱼
