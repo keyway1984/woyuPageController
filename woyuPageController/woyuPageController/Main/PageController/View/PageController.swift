@@ -23,6 +23,7 @@ class PageController: UIView {
     private lazy var pages: [UIViewController] = [] // 页面集合
     private var selectedHeaderIndex: Int = -1 // 当前已选中的页眉的索引
     private var showUnderLine: Bool = true // 是否显示下标
+    private var showRightBarItem: Bool = true // 是否显示baritem
 
     private var numberOfItems: Int = 0 // 页眉/页面的数量
 
@@ -31,6 +32,7 @@ class PageController: UIView {
     private lazy var headerContainer = PageContainer() // 页眉容器
     private lazy var pageTableContainer = PageContainer() // 页面容器
     private lazy var underLine = PageUnderLine() // 页眉下标
+    private lazy var rightBarItem = PageRightBarItem() // 右侧按钮
 
     // MARK: - 构造器
 
@@ -67,6 +69,7 @@ extension PageController {
         createPageContainer()
         createHeaders()
         createUnderLine()
+        createRightBarItem()
         createPageTables()
     }
 
@@ -77,6 +80,9 @@ extension PageController {
 
         // 更新页眉/页面数量
         if let nums = dataSource?.pageController(self, numberOfPagesInContainer: pageTableContainer) { numberOfItems = nums }
+
+        // 更新右侧barItem属性
+        if let state = layout?.pageController(self, showRightBarItem: &rightBarItem) { showRightBarItem = state }
 
         // 更新下标属性
         if let state = layout?.pageController(self, showUnderLineForSelectedHeader: &underLine) { showUnderLine = state }
@@ -125,7 +131,7 @@ extension PageController {
             header.isSelected = false
 
             // 设置页眉手势
-            setupGesture(to: header)
+            setupTapGesture(to: header, action: #selector(pageHeaderGestureResponder))
 
             // 添加页眉进容器
             headerContainer.addSubview(header)
@@ -153,9 +159,11 @@ extension PageController {
         }
 
         // 对容器的contentSize进行约束
-        if let lastHeader = headers.last {
-            lastHeader.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: -lastHeader.LRMargin).isActive = true
-        }
+        guard let lastHeader = headers.last else { return }
+
+        // 根据代理函数指示是否显示rightBarItem而计算出不同的trailing约束
+        let trailiConstant: CGFloat = showRightBarItem ? (-rightBarItem.width - lastHeader.LRMargin) : (-lastHeader.LRMargin)
+        lastHeader.trailingAnchor.constraint(equalTo: headerContainer.trailingAnchor, constant: trailiConstant).isActive = true
     }
 
     // 创建页面
@@ -212,22 +220,44 @@ extension PageController {
             underLine.trailingAnchor.constraint(equalTo: firstPageHeader.trailingAnchor, identifier: "lineTrailing\(firstPageHeader.index)"),
         ])
     }
+
+    // 创建右侧按钮
+    private func createRightBarItem() {
+        // 如果代理函数指示不显示右侧barItem，则返回
+        guard showRightBarItem else { return }
+
+        // 设置barItem手势
+        setupTapGesture(to: rightBarItem, action: #selector(rightBarItemGestureResponder))
+
+        addSubview(rightBarItem)
+
+        // 从页眉集合中获取第一个页眉
+        guard let firstPageHeader = headers.first else { return }
+
+        // 设置autolayout约束参数
+        NSLayoutConstraint.activate([
+            rightBarItem.centerYAnchor.constraint(equalTo: firstPageHeader.centerYAnchor),
+            rightBarItem.heightAnchor.constraint(equalTo: firstPageHeader.heightAnchor),
+            rightBarItem.trailingAnchor.constraint(equalTo: trailingAnchor),
+            rightBarItem.widthAnchor.constraint(equalToConstant: rightBarItem.width),
+        ])
+    }
 }
 
 // MARK: - 交互相关方法
 
 // 页眉交互
 extension PageController {
-    // 页眉
-    // 设置手势
-    private func setupGesture(to target: PageHeader) {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(pageHeaderGestureResponder(_:)))
+    // 设置单击手势
+    private func setupTapGesture(to target: UIView, action: Selector?) {
+        let tapGesture = UITapGestureRecognizer(target: self, action: action)
         tapGesture.numberOfTapsRequired = 1
         target.addGestureRecognizer(tapGesture)
         target.isUserInteractionEnabled = true
     }
 
     // 手势反馈
+    // 单击页眉触发
     @objc private func pageHeaderGestureResponder(_ sender: UITapGestureRecognizer) {
         guard let selectedHeader = sender.view as? PageHeader else { return }
 
@@ -237,6 +267,13 @@ extension PageController {
         turnToPage(pages[selectedHeader.index])
 
         selectedHeaderIndex = selectedHeader.index // 更新当前已选中的页眉索引
+    }
+
+    // 单击rightBarItem触发
+    @objc private func rightBarItemGestureResponder(_ sender: UITapGestureRecognizer) {
+        guard let _ = sender.view as? PageRightBarItem else { return }
+
+        print("RightBarItem Is Tapped！")
     }
 }
 

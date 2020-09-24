@@ -8,25 +8,28 @@
 
 import UIKit
 
-class PageContainer: UIScrollView {
-    
-    //MARK: - 公开属性
-    var height: CGFloat = 0
-    
+// MARK: - 容器类
 
-    //MARK: - 构造器
-    //指定构造器
+class PageContainer: UIScrollView {
+    // MARK: - 公开属性
+
+    var height: CGFloat = 0
+
+    // MARK: - 构造器
+
+    // 指定构造器
     init() {
         super.init(frame: .zero)
-        self.translatesAutoresizingMaskIntoConstraints = false
-        self.showsHorizontalScrollIndicator = false
-        self.showsVerticalScrollIndicator = false
-        self.scrollsToTop = false
+        translatesAutoresizingMaskIntoConstraints = false
+        showsHorizontalScrollIndicator = false
+        showsVerticalScrollIndicator = false
+        scrollsToTop = false
     }
-    //必要构造器
-    //当前类不支持从xib 或者 storyboard 构造
-    required init?(coder: NSCoder) {
+
+    // 必要构造器
+    // 当前类不支持从xib 或者 storyboard 构造
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
 }

@@ -29,6 +29,8 @@ protocol PageControllerDelegateLayout: AnyObject {
     func pageController(_: PageController, heightOfHeaderContainer container: PageContainer) -> CGFloat
     // 设置页眉下标是否显示/定制页眉下标
     func pageController(_ controller: PageController, showUnderLineForSelectedHeader line: inout PageUnderLine) -> Bool
+    // 设置页眉右侧barItem是否显示/定制barItem
+    func pageController(_ controller: PageController, showRightBarItem item: inout PageRightBarItem) -> Bool
 }
 
 // MARK: - 协议方法的默认实现

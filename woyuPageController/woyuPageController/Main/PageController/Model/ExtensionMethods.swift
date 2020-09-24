@@ -52,6 +52,16 @@ extension UIView {
     func constraint(withIdentify: String) -> NSLayoutConstraint? {
         constraints.filter { $0.identifier == withIdentify }.first
     }
+
+    // 设置阴影
+    func dropShadow(color: UIColor, opacity: Float, offset: CGSize, radius: CGFloat) {
+        layer.masksToBounds = false
+        layer.shadowColor = color.cgColor // 阴影颜色
+        layer.shadowOpacity = opacity // 阴影透明度
+        layer.shadowOffset = offset // 阴影离的位移
+        layer.shadowRadius = radius // 阴影的宽度
+        layer.shouldRasterize = true // 缓存阴影
+    }
 }
 
 // MARK: - UILabel
@@ -74,16 +84,16 @@ extension UILabel {
     }
 }
 
+// MARK: - UIColor
 
-//MARK: - UIColor
 extension UIColor {
-    //使用随机数获取随机颜色
+    // 使用随机数获取随机颜色
     static func random() -> UIColor {
-         return UIColor(
-            red:   .random(in: 0...1),
-            green: .random(in: 0...1),
-            blue:  .random(in: 0...1),
+        UIColor(
+            red: .random(in: 0 ... 1),
+            green: .random(in: 0 ... 1),
+            blue: .random(in: 0 ... 1),
             alpha: 1.0
-         )
-     }
+        )
+    }
 }

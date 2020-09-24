@@ -8,6 +8,8 @@
 
 import UIKit
 
+// MARK: - 页面类（本程序中并没有用到）
+
 class PageTable: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()

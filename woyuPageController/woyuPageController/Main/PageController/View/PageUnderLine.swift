@@ -8,13 +8,14 @@
 
 import UIKit
 
+// MARK: - 下标类
+
 class PageUnderLine: UIView {
-    
-    //MARK: - 公有属性
+    // MARK: - 公有属性
+
     var height: CGFloat = 6 // 下标的默认高度
     var spacing: CGFloat = 5 // 下标和页眉间的间距
 
-    
     // MARK: - 构造器
 
     // 指定构造器
@@ -29,5 +30,4 @@ class PageUnderLine: UIView {
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
 }

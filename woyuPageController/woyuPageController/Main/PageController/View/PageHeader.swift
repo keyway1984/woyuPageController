@@ -8,6 +8,8 @@
 
 import UIKit
 
+// MARK: - 页眉类
+
 class PageHeader: UIView {
     // MARK: - 公有属性
 
@@ -90,9 +92,11 @@ extension PageHeader {
 
         // autolayout设置
         NSLayoutConstraint.activate([
-            headerBody.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0, identifier: "bodyBottom"),
-            headerBody.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0, identifier: "bodyLeading"),
-            headerBody.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0, identifier: "bodyTrailing"),
+//            headerBody.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0, identifier: "bodyBottom"),
+//            headerBody.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0, identifier: "bodyLeading"),
+//            headerBody.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0, identifier: "bodyTrailing"),
+            headerBody.centerXAnchor.constraint(equalTo: centerXAnchor),
+            headerBody.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
 }

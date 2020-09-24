@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D60ABC5125189F9B0072FD35 /* PageRightBarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D60ABC5025189F9B0072FD35 /* PageRightBarItem.swift */; };
 		D64186962512283500041F03 /* PageTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64186952512283500041F03 /* PageTable.swift */; };
 		D64186982513213900041F03 /* PageControllerProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64186972513213900041F03 /* PageControllerProtocols.swift */; };
 		D641869A251331F800041F03 /* PageUnderLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6418699251331F800041F03 /* PageUnderLine.swift */; };
@@ -24,6 +25,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D60ABC5025189F9B0072FD35 /* PageRightBarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageRightBarItem.swift; sourceTree = "<group>"; };
 		D64186952512283500041F03 /* PageTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTable.swift; sourceTree = "<group>"; };
 		D64186972513213900041F03 /* PageControllerProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageControllerProtocols.swift; sourceTree = "<group>"; };
 		D6418699251331F800041F03 /* PageUnderLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageUnderLine.swift; sourceTree = "<group>"; };
@@ -65,20 +67,14 @@
 		D63B1D7125134377006CF952 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				D677EF2325064A9600D2736D /* PageController.swift */,
 				D641869B2513387E00041F03 /* PageContainer.swift */,
 				D677EF25250720D400D2736D /* PageHeader.swift */,
 				D6418699251331F800041F03 /* PageUnderLine.swift */,
 				D64186952512283500041F03 /* PageTable.swift */,
+				D60ABC5025189F9B0072FD35 /* PageRightBarItem.swift */,
 			);
 			path = View;
-			sourceTree = "<group>";
-		};
-		D63B1D722513437D006CF952 /* Controller */ = {
-			isa = PBXGroup;
-			children = (
-				D677EF2325064A9600D2736D /* PageController.swift */,
-			);
-			path = Controller;
 			sourceTree = "<group>";
 		};
 		D677EEFC25063C6000D2736D = {
@@ -126,7 +122,6 @@
 			children = (
 				D63B1D702513436C006CF952 /* Model */,
 				D63B1D7125134377006CF952 /* View */,
-				D63B1D722513437D006CF952 /* Controller */,
 			);
 			path = PageController;
 			sourceTree = "<group>";
@@ -202,6 +197,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D60ABC5125189F9B0072FD35 /* PageRightBarItem.swift in Sources */,
 				D677EF1325063C6000D2736D /* woyuPageController.xcdatamodeld in Sources */,
 				D677EF0D25063C6000D2736D /* ViewController.swift in Sources */,
 				D641869A251331F800041F03 /* PageUnderLine.swift in Sources */,

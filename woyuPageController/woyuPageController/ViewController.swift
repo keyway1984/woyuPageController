@@ -123,4 +123,14 @@ extension ViewController: PageControllerDelegateLayout {
     func pageController(_: PageController, showUnderLineForSelectedHeader _: inout PageUnderLine) -> Bool {
         false
     }
+
+    // 定制右侧barItem
+    func pageController(_: PageController, showRightBarItem item: inout PageRightBarItem) -> Bool {
+        // 设置属性
+        item.backgroundColor = UIColor.white
+        item.width = 40
+        // 设置阴影参数
+        item.dropShadow(color: UIColor.white, opacity: 1, offset: .zero, radius: 10)
+        return true
+    }
 }
