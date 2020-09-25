@@ -24,8 +24,8 @@ class PageController: UIView {
     private var selectedHeaderIndex: Int = -1 // 当前已选中的页眉的索引
     private var showUnderLine: Bool = true // 是否显示下标
     private var showRightBarItem: Bool = true // 是否显示baritem
-
     private var numberOfItems: Int = 0 // 页眉/页面的数量
+    private var autoContainerAdjust: Bool = false // 是否在划页的同时自动校正页眉容器
 
     // 子View实例
 
@@ -86,6 +86,9 @@ extension PageController {
 
         // 更新下标属性
         if let state = layout?.pageController(self, showUnderLineForSelectedHeader: &underLine) { showUnderLine = state }
+
+        // 设置是否划页同时自动校正页眉容器
+        if let state = layout?.pageController(self, containerAdjustWhenDraggingPage: headerContainer) { autoContainerAdjust = state }
     }
 
     // 创建页眉容器
@@ -287,8 +290,8 @@ extension PageController: UIScrollViewDelegate {
             let targetIndex = Int(roundf(Float(offsetScale))) // 将滑动系数四舍五入后获取要切换的目标页眉索引
 
             switchToHeader(headers[targetIndex]) // 根据目标页眉索引进行页眉切换
-            moveUnderLine(whenDraggingPage: offsetScale)
-            containerAdjust(whenDraggingPage: offsetScale) // 如果不需要做到像斗鱼APP那样在划页的同时移动页眉容器，则这个方法可以去掉
+            moveUnderLine(whenDraggingPage: offsetScale) // 移动下标
+            if autoContainerAdjust { containerAdjust(whenDraggingPage: offsetScale) } // 根据代理函数指示是否划页同时自动校正页眉容器
             selectedHeaderIndex = targetIndex // 更新当前已选中的页眉索引
         }
     }

@@ -18,19 +18,21 @@ protocol PageControllerDataSource: AnyObject {
 
     // 获取初始化创建的页眉
     func pageController(_ controller: PageController, headerForPageAt index: Int) -> PageHeader
-    
-    //获取初始化创建的页面
+
+    // 获取初始化创建的页面
     func pageController(_ controller: PageController, pageForHeaderAt index: Int) -> UIViewController
 }
 
 // UI布局
 protocol PageControllerDelegateLayout: AnyObject {
     // 指定页眉容器高度
-    func pageController(_: PageController, heightOfHeaderContainer container: PageContainer) -> CGFloat
+    func pageController(_ controller: PageController, heightOfHeaderContainer container: PageContainer) -> CGFloat
     // 设置页眉下标是否显示/定制页眉下标
     func pageController(_ controller: PageController, showUnderLineForSelectedHeader line: inout PageUnderLine) -> Bool
     // 设置页眉右侧barItem是否显示/定制barItem
     func pageController(_ controller: PageController, showRightBarItem item: inout PageRightBarItem) -> Bool
+    // 指示是否在滑动页面的同时自动校正页眉容器（如果返回false，则页眉容器居中将只会在划页完成后发生）
+    func pageController(_ controller: PageController, containerAdjustWhenDraggingPage container: PageContainer) -> Bool
 }
 
 // MARK: - 协议方法的默认实现
@@ -52,5 +54,10 @@ extension PageControllerDelegateLayout {
         line.backgroundColor = #colorLiteral(red: 0.3647058904, green: 0.06666667014, blue: 0.9686274529, alpha: 1)
 
         return true
+    }
+    
+    //默认在滑动页面的时候不要同时校正页眉容器
+    func pageController(_ controller: PageController, containerAdjustWhenDraggingPage container: PageContainer) -> Bool {
+        return false
     }
 }
