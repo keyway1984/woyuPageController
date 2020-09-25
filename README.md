@@ -24,7 +24,7 @@
 
 ## 使用说明
 
-你可以通过再ViewController中满足以下协议来对PageController进行定制。
+你可以通过在ViewController中满足以下协议来对PageController进行定制。
 
 ```swift
 // 数据源
